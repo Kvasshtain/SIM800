@@ -1,0 +1,90 @@
+# Object files
+*.o
+*.o.*
+*.ko
+*.obj
+*.elf
+
+
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+
+
+# Binary files
+*.bin
+
+
+
+# Temp files
+*.*~
+
+# Configs for QT_Creator (If use QT_Creator as IDE)
+*.config
+*.creator
+*.creator.user*
+*.files
+*.includes
+
+# Keil uVision files
+*.dep
+*.bak
+*.Andre
+*.konyuhovai
+*.kvaskovu
+*.lab3
+*.user
+*.plg
+*.sct
+*.uvopt
+*.uvproj
+*.cOLD
+*uvgui*
+
+# CooCox files
+*.coproj
+*.cogui
+*.comarker
+
+# output directories
+GSM6/
+
+# library directories
+syscalls/
+stm_lib/
+cmsis_boot/
+cmsis/
+
+#Out files
+out/
+*.crf
+*.lst
+*.dep
+*.d
+*.i
+*.hex
+*.htm
+*.lmp
+*.map
+*.lst
+*.autosave
+*.axf
+
+
+
+
+
+# Files that we don't want to ignore
+!.gitignore
