@@ -1,10 +1,21 @@
 /* Includes ------------------------------------------------------------------*/
+#include "phisic.h"
+
 #include "stm32f10x.h"
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_usart.h"
 #include "stm32f10x_dma.h"
 #include <stdio.h>
+#include <string.h>
+
+uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
+int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
+uint8_t rec_buf_usart1_overflow; //флаг переполнения приемного буфера
+
+uint8_t rec_buf_usart2[SIZE_BUF_UART2];  // буфер для принимаемых данных UART2
+uint8_t rec_buf_last_usart2; // индекс последнего необработанного символа в буфере UART2
+uint8_t rec_buf_usart2_overflow; //флаг переполнения приемного буфера
 
 /***************************************************************************//**
  Настройка тактирования
@@ -61,9 +72,14 @@ void SetupGPIO(void)
  ******************************************************************************/
 void SetupUSART1(void)
 {
-    GPIO_InitTypeDef  GPIO_InitStructure;
+
+	GPIO_InitTypeDef  GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
     DMA_InitTypeDef DMA_InitStructure;
+
+    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
+  	rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
+
 
     /** Configure pins as GPIO
     PA8    ------> GPIO_Output направление передачи RS485
@@ -112,6 +128,7 @@ void SetupUSART1(void)
     USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
     USART_ITConfig(USART1, USART_IT_TC, ENABLE);   // разрешаем прерывание по окончанию передачи (нужно для переключения режима работы rs485)
 
+    /*
     DMA_DeInit(DMA1_Channel4);
     DMA_InitStructure.DMA_BufferSize = 1;
     DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
@@ -126,6 +143,7 @@ void SetupUSART1(void)
     DMA_InitStructure.DMA_Priority = DMA_Priority_Medium;
     DMA_Init(DMA1_Channel4, &DMA_InitStructure);
     DMA_Cmd(DMA1_Channel4, DISABLE);
+    */
 }
 
 /***************************************************************************//**
@@ -133,8 +151,13 @@ void SetupUSART1(void)
  ******************************************************************************/
 void SetupUSART2(void)
 {
-    GPIO_InitTypeDef  GPIO_InitStructure;
+
+	GPIO_InitTypeDef  GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
+
+    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
+    rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
+
 
     /** Configure pins as GPIO
     PA1    ------> GPIO_Output Сигнал PowerKEY для SIM800
@@ -184,6 +207,59 @@ void SetupUSART2(void)
     USART_Cmd(USART2, ENABLE);
 
     USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+}
+
+//Функция отправки байта в UART1
+void send_to_uart1(uint8_t data)
+{
+    while(!(USART1->SR & USART_SR_TC));
+    USART1->DR=data;
+}
+
+//Функция отправки байта в UART2
+void send_to_uart2(uint8_t data)
+{
+    while(!(USART2->SR & USART_SR_TC));
+    USART2->DR=data;
+}
+
+//Функция отправки строки в UART1
+void send_str_uart1(char * string)
+{
+    uint8_t i=0;
+    while(string[i])
+    {
+        send_to_uart1(string[i]);
+        i++;
+    }
+    //send_to_uart('\r');
+    //send_to_uart('\n');
+}
+
+//Функция отправки строки в UART2
+void send_str_uart2(char * string)
+{
+    uint8_t i=0;
+    while(string[i])
+    {
+        send_to_uart2(string[i]);
+        i++;
+    }
+    //send_to_uart('\r');
+    //send_to_uart('\n');
+}
+
+//Функция отправки строки в UART2 с добавлением в конец символов \n\r для правильного вывода AT команд
+void send_str_uart2rn(char * string)
+{
+    uint8_t i=0;
+    while(string[i])
+    {
+        send_to_uart2(string[i]);
+        i++;
+    }
+    send_to_uart('\r');
+    send_to_uart('\n');
 }
 
 // настройка АЦП
@@ -247,13 +323,19 @@ void USART1_IRQHandler(void)
 // Прерывания от UART2
 void USART2_IRQHandler(void)
 {
-	uint8_t tmp;
 
     //if (USART_GetITStatus(USART1, USART_FLAG_RXNE) == SET)
-    if((USART1->SR & USART_SR_RXNE)!=0)
+    if((USART2->SR & USART_SR_RXNE)!=0)
     {
-        USART_ClearITPendingBit(USART1, USART_FLAG_RXNE);
-        tmp = USART_ReceiveData(USART1);
-
+        USART_ClearITPendingBit(USART2, USART_FLAG_RXNE);
+        if (rec_buf_last_usart2 < SIZE_BUF_UART2 - 1) //
+        {
+            rec_buf_usart2[++rec_buf_last_usart2] = USART_ReceiveData(USART2); // инкрементируем индекс последнего необработанного символа складываем принятые данные в приемный буфер
+            rec_buf_usart2_overflow = 0;
+        }
+        else //в противном случае ни чего не делаем (данные просто пропадают)
+        {
+        	rec_buf_usart2_overflow = 1; // выставляем флаг переполнения приемного буфера (аварийная ситуация)
+        }
     }
 }
