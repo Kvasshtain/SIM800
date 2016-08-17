@@ -9,13 +9,13 @@
 #include <stdio.h>
 #include <string.h>
 
-uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
-int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
-uint8_t rec_buf_usart1_overflow; //флаг переполнения приемного буфера
+//uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
+//int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
+//uint8_t rec_buf_usart1_overflow; //флаг переполнения приемного буфера
 
-uint8_t rec_buf_usart2[SIZE_BUF_UART2];  // буфер для принимаемых данных UART2
-uint8_t rec_buf_last_usart2; // индекс последнего необработанного символа в буфере UART2
-uint8_t rec_buf_usart2_overflow; //флаг переполнения приемного буфера
+//uint8_t rec_buf_usart2[SIZE_BUF_UART2];  // буфер для принимаемых данных UART2
+//uint8_t rec_buf_last_usart2; // индекс последнего необработанного символа в буфере UART2
+//uint8_t rec_buf_usart2_overflow; //флаг переполнения приемного буфера
 
 /***************************************************************************//**
  Настройка тактирования
@@ -77,8 +77,8 @@ void SetupUSART1(void)
     USART_InitTypeDef USART_InitStructure;
     DMA_InitTypeDef DMA_InitStructure;
 
-    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
-  	rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
+//    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
+//  	rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
 
 
     /** Configure pins as GPIO
@@ -155,8 +155,8 @@ void SetupUSART2(void)
 	GPIO_InitTypeDef  GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
 
-    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
-    rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
+//    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
+//    rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
 
 
     /** Configure pins as GPIO
@@ -258,8 +258,8 @@ void send_str_uart2rn(char * string)
         send_to_uart2(string[i]);
         i++;
     }
-    send_to_uart('\r');
-    send_to_uart('\n');
+    send_to_uart2('\r');
+    send_to_uart2('\n');
 }
 
 // настройка АЦП
@@ -328,14 +328,11 @@ void USART2_IRQHandler(void)
     if((USART2->SR & USART_SR_RXNE)!=0)
     {
         USART_ClearITPendingBit(USART2, USART_FLAG_RXNE);
-        if (rec_buf_last_usart2 < SIZE_BUF_UART2 - 1) //
-        {
-            rec_buf_usart2[++rec_buf_last_usart2] = USART_ReceiveData(USART2); // инкрементируем индекс последнего необработанного символа складываем принятые данные в приемный буфер
-            rec_buf_usart2_overflow = 0;
-        }
-        else //в противном случае ни чего не делаем (данные просто пропадают)
-        {
-        	rec_buf_usart2_overflow = 1; // выставляем флаг переполнения приемного буфера (аварийная ситуация)
-        }
+
+        sim800_routine(NULL, USART_ReceiveData(USART2), NULL, NULL); // вызываем функцию обработки получаемых от SIM800 данных,
+                                                                     //в первом, в третьем и в четвертом параметре передаем NULL,
+                                                                     //т.к. это не первоначальный вызов из управляющей программы,
+                                                                     //а вызов из прерывания для заполнения приемного буфера
+
     }
 }

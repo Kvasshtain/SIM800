@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #ifndef PHISIC_H_INCLUDED
 #define PHISIC_H_INCLUDED
 
@@ -5,6 +7,14 @@
 #define SIM800_PWRKEY          GPIO_Pin_1
 #define SIZE_BUF_UART1         32
 #define SIZE_BUF_UART2         32
+
+//extern uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
+//extern int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
+//extern uint8_t rec_buf_usart1_overflow; //флаг переполнения приемного буфера
+
+//extern uint8_t rec_buf_usart2[SIZE_BUF_UART2];  // буфер для принимаемых данных UART2
+//extern uint8_t rec_buf_last_usart2; // индекс последнего необработанного символа в буфере UART2
+//extern uint8_t rec_buf_usart2_overflow; //флаг переполнения приемного буфера
 
 void SetupClock(void);  // Функция настройки тактирования
 void SetupUSART1(void); // Функция настройки UART1
