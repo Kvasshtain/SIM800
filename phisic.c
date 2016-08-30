@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "SIM800.h"
+
 //uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
 //int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
 //uint8_t rec_buf_usart1_overflow; //флаг переполнения приемного буфера
@@ -22,9 +24,9 @@
  ******************************************************************************/
 void SetupClock(void)
 {
-	// Настраиваем тактирование АЦП
-	RCC_ADCCLKConfig(RCC_PCLK2_Div2);
-	/* Enable USART1, USART2 and GPIOA, GPIOB, GPIOC and ADC1 clock                                        */
+    // Настраиваем тактирование АЦП
+    RCC_ADCCLKConfig(RCC_PCLK2_Div2);
+    /* Enable USART1, USART2 and GPIOA, GPIOB, GPIOC and ADC1 clock                                        */
     RCC_APB2PeriphClockCmd (RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC | RCC_APB2Periph_ADC1 , ENABLE);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
 
@@ -35,9 +37,9 @@ void SetupClock(void)
  ******************************************************************************/
 void SetupGPIO(void)
 {
-	GPIO_InitTypeDef  GPIO_InitStructure;
+    GPIO_InitTypeDef  GPIO_InitStructure;
 
-	/** Configure pins as GPIO
+    /** Configure pins as GPIO
     PC13    ------> GPIO_Output Сигнал PL для дискретных входов
     PC14    ------> GPIO_Output Сигнал CP для дискретных входов
     PC15    ------> GPIO_Input  Сигнал QH от  дискретных входов
@@ -73,12 +75,12 @@ void SetupGPIO(void)
 void SetupUSART1(void)
 {
 
-	GPIO_InitTypeDef  GPIO_InitStructure;
+    GPIO_InitTypeDef  GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
     DMA_InitTypeDef DMA_InitStructure;
 
-//    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
-//  	rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
+    //    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
+    //  	rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
 
 
     /** Configure pins as GPIO
@@ -152,11 +154,11 @@ void SetupUSART1(void)
 void SetupUSART2(void)
 {
 
-	GPIO_InitTypeDef  GPIO_InitStructure;
+    GPIO_InitTypeDef  GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
 
-//    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
-//    rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
+    //    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
+    //    rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
 
 
     /** Configure pins as GPIO
@@ -249,7 +251,7 @@ void send_str_uart2(char * string)
     //send_to_uart('\n');
 }
 
-//Функция отправки строки в UART2 с добавлением в конец символов \n\r для правильного вывода AT команд
+//Функция отправки строки в UART2 с добавлением в конец символов \r\n для правильного вывода AT команд
 void send_str_uart2rn(char * string)
 {
     uint8_t i=0;
@@ -265,14 +267,14 @@ void send_str_uart2rn(char * string)
 // настройка АЦП
 void  InitADC(void)
 {
-	GPIO_InitTypeDef GPIO_InitStruct;
+    GPIO_InitTypeDef GPIO_InitStruct;
 
-	/** ADC1 GPIO Configuration
-	 		  PA6	 ------> ADC1_IN6
-			  PA7	 ------> ADC1_IN7
-			  PB0	 ------> ADC1_IN8
-			  PB1	 ------> ADC1_IN9
-	*/
+    /** ADC1 GPIO Configuration
+                          PA6	 ------> ADC1_IN6
+                          PA7	 ------> ADC1_IN7
+                          PB0	 ------> ADC1_IN8
+                          PB1	 ------> ADC1_IN9
+        */
     GPIO_InitStruct.GPIO_Pin = GPIO_Pin_6|GPIO_Pin_7;
     GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AIN;
     GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -329,10 +331,7 @@ void USART2_IRQHandler(void)
     {
         USART_ClearITPendingBit(USART2, USART_FLAG_RXNE);
 
-        sim800_routine(NULL, USART_ReceiveData(USART2), NULL, NULL); // вызываем функцию обработки получаемых от SIM800 данных,
-                                                                     //в первом, в третьем и в четвертом параметре передаем NULL,
-                                                                     //т.к. это не первоначальный вызов из управляющей программы,
-                                                                     //а вызов из прерывания для заполнения приемного буфера
-
+        sim800_response_handler(&sim800_1_current_state, USART_ReceiveData(USART2)); // вызываем функцию обработки получаемых от SIM800
+        //данных, передаем первым параметром ссылку на состояние конкретного модуля SIM800 (их может быть несколько)
     }
 }
