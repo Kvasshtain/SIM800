@@ -2,6 +2,7 @@
 
 #include "main.h"
 #include "phisic.h"
+#include "SIM800.h"
 
 #include "stm32f10x.h"
 #include "stm32f10x_gpio.h"

@@ -14,6 +14,10 @@
 
 #define CURRENT_CMD_SIZE 16 // размер буфера под передаваемую SIM800 команду
 #define REC_BUF_SIZE 256    // размер буфера под принимаемые от SIM800 данные (для случая получения больших объемов данных требуется увеличить это число)
+#define DATA_BUF_SIZE 256   // размер буфера под передаваемые в SIM800 данные (для случая отправки больших объемов данных требуется увеличить это число)
+#define SEND_SMS_DATA_SIZE 256   // размер буфера под отправляемое СМС сообщение
+#define REC_SMS_DATA_SIZE 256    // размер буфера под принимаемое СМС сообщение
+#define PHONE_NUM_SIZE 16        // размер буфера под телефонный номер сделал с запасом (достаточно 11 символов, но выравнил на степень двойки)
 
 // стадии процесса общения с модулем SIM800
 enum com_stage {
@@ -22,34 +26,57 @@ enum com_stage {
 	proc_completed    //обработка ответа на запрос завершена
 };
 
+//// Структура представляющая из себя определенную AT-команду
+//struct request {
+//	char current_cmd[CURRENT_CMD_SIZE]; // Сама команда
+//	void (*response_handler)(uint8_t * responce, uint8_t * result_of_last_execution, enum com_stage communication_stage, void (*unex_resp_handler)(uint8_t * responce), uint8_t num_of_sms;);
+//	// указатель на обработчик ответа для данной команды
+//	// должен принимать:1) указатель на буфер где лежит сформированный в прерывании ответ
+//	//                  2) указатель на то куда сложить результат обработки ответа
+//	//                  3) указатель на ячейку памяти где лежит флаг текущего состояние процесса обработки запроса. Это надо что-бы обработчик положил туда proc_completed - обработка ответа на запрос завершена
+//    //                  4) указатель на обработчик неожиданных ответов, если данная функция обнаружила, что ответ адресован не ей
+//};
+
 // ГЛОБАЛЬНАЯ СТРУКТУРА СТАТУСА ПРОЦЕССА ОБМЕНА ДАННЫМИ С SIM800
 // Структура описывает текущее состояние процесса выдачи запросов и получения ответов от конкретного модуля SIM800 (их может быть несколько)
-typedef struct {
-    char current_cmd[CURRENT_CMD_SIZE];       // буффер для текущей обрабатываемой SIM800 команды (необходим для проверки ЭХО)
-    com_stage communication_stage;            // текущее состояние процесса обработки запроса
-    uint8_t current_pos;                      // текущая позиция последнего принятого символа в приемном буфере
-    //uint8_t is_responce;                      // флаг для того, что бы (если включен режим ЭХО у SIM800) отличать внезапные сообщения от ответов на заданные запросы
-    uint8_t rec_buf[REC_BUF_SIZE];            // приемный буфер, куда будет складываться ответ от SIM800 (используетя обработчиком прерывания)
-    uint8_t responce[REC_BUF_SIZE];           // буфер с сформированным ответом от SIM800 для обработки ответа на посланный запрос или внезапного сообщения
-    //uint8_t unexp_responce[REC_BUF_SIZE];     // буфер с сформированным ответом от SIM800 для обработки внезапного сообщения
-    void (*response_handler)(void);           // указатель на обработчик ответа
-    void (*send_uart_function)(char *);       // указатель на функцию отправки данных в конкретный UART на котором сидит конкретный модуль SIM800
-    uint8_t result_of_last_execution;         // результат выполнения последней команды 0 - OK, 1 - fail
-    uint8_t num_of_sms;                       // число пришедших СМС хранящихся в SIM-карте
-} sim800_current_state;
+struct sim800_current_state{
+    enum com_stage communication_stage;             // текущее состояние процесса обработки запроса
+    uint8_t current_pos;                            // текущая позиция последнего принятого символа в приемном буфере
+    uint8_t rec_buf[REC_BUF_SIZE];                  // приемный буфер, куда будет складываться ответ от SIM800 (используетя обработчиком прерывания)
+    uint8_t responce[REC_BUF_SIZE];                 // буфер с сформированным ответом от SIM800 для обработки ответа на посланный запрос или внезапного сообщения
+    //struct request *current_req;                  // указатель на текущую обрабатываемую команду
+    void (*send_uart_function)(char *);             // указатель на функцию отправки данных в конкретный UART на котором сидит конкретный модуль SIM800
+    uint8_t result_of_last_execution;               // результат выполнения последней команды 0 - OK, 1 - fail
+    uint8_t num_of_sms;                             // число пришедших СМС хранящихся в SIM-карте
+    void (*unex_resp_handler)(struct sim800_current_state *current_state); // указатель на обработчик неожиданного ответа
+    char current_cmd[CURRENT_CMD_SIZE];             // отправленная команда
+    void (*response_handler)(struct sim800_current_state *current_state); // указатель на обработчик ответа для текущей обрабатываемой команды
+    uint8_t send_phone_number[PHONE_NUM_SIZE];      // текущий номер телефона для отправляемых СМС сообщений
+    uint8_t rec_phone_number[PHONE_NUM_SIZE];       // текущий номер телефона принятого СМС сообщения
+    uint8_t send_SMS_data[SEND_SMS_DATA_SIZE];      // буфер для передаваемых СМС сообщений
+    uint8_t rec_SMS_data[REC_SMS_DATA_SIZE];        // буфер для принимаемых СМС сообщений
+};
 
-extern sim800_current_state sim800_1_current_state; // модулей может быть несколько
+extern struct sim800_current_state state_of_sim800_num1; // модулей может быть несколько
 
 void sim800_PWRKEY_on(void); // Функция включения модуля SIM800
 //!!!!!!inline void Sim800_WriteCmd(const char *cmd); // Функция отправки данных в UART на котором сидит Sim800
-void sim800_AT_request(sim800_current_state * current_module); // Функция отправки запроса на автонастройку baudrate модуля SIM800
-void sim800_AT_responce_handler(uint8_t * responce, uint8_t result, uint8_t is_busy); // Обработчик ответа команды "AT"
-uint8_t sim800_init(sim800_current_state * current_module, int32_t * init_data); // Функция инициализации одного из модулей SIM800
-int8_t sim800_request(sim800_current_state * current_state); // функция отправки запросов в SIM800
-void process_echo(uint8_t is_responce, uint8_t current_pos, sim800_current_state *current_state); // Обработка ЭХО
-void process_cmd(uint8_t is_responce, uint8_t current_pos, sim800_current_state *current_state);  // Обработка ответа на команду
-void sim800_response_handler(sim800_current_state * current_state, uint8_t data); // функция вызываемая из обработчика прерывания по приему символов от SIM800
-void unexpec_message_parse(uint8_t * unexp_responce); //функция парсинга внезапных сообщений от SIM800 (например пришла SMS)
+//void sim800_AT_request(struct sim800_current_state *current_state); // Функция отправки запроса на автонастройку baudrate модуля SIM800
+
+uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uart_function)(char *)); // Функция инициализации одного из модулей SIM800
+int8_t sim800_request(struct sim800_current_state *current_state); // функция отправки запросов в SIM800
+void process_echo(uint8_t is_responce, uint8_t current_pos, struct sim800_current_state *current_state); // Обработка ЭХО
+void process_cmd(uint8_t is_responce, uint8_t current_pos, struct sim800_current_state *current_state);  // Обработка ответа на команду
+void sim800_response_handler(struct sim800_current_state *current_state, uint8_t data); // функция вызываемая из обработчика прерывания по приему символов от SIM800
+
+
+void sim800_AT_request(struct sim800_current_state * current_state); // Функция отправки запроса на автонастройку baudrate модуля SIM800 (команда "AT")
+void sim800_AT_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT"
+
+void sim800_ATplusCMGS_request(struct sim800_current_state * current_state, uint8_t * phone_number, uint8_t * SMS_data); // Функция отправки СМС SIM800 (команда "AT+CMGS=«ХХХХХХХХХХХ»")
+void sim800_ATplusCMGS_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGS=«ХХХХХХХХХХХ»"
+
+void unexpec_message_parse(struct sim800_current_state *current_state); //функция парсинга внезапных сообщений от SIM800 (например пришла SMS)
 //uint8_t sim800_sendSMS(uint8_t* text_buf, uint8_t length);   // Функция отправки SMS с модуля SIM800
 
 #endif

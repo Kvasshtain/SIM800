@@ -251,8 +251,8 @@ void send_str_uart2(char * string)
     //send_to_uart('\n');
 }
 
-//Функция отправки строки в UART2 с добавлением в конец символов \r\n для правильного вывода AT команд
-void send_str_uart2rn(char * string)
+//Функция отправки строки в UART2 с добавлением в конец символов \r для правильного вывода AT команд
+void send_str_uart2_plus_r(char * string)
 {
     uint8_t i=0;
     while(string[i])
@@ -261,7 +261,6 @@ void send_str_uart2rn(char * string)
         i++;
     }
     send_to_uart2('\r');
-    send_to_uart2('\n');
 }
 
 // настройка АЦП
@@ -331,7 +330,7 @@ void USART2_IRQHandler(void)
     {
         USART_ClearITPendingBit(USART2, USART_FLAG_RXNE);
 
-        sim800_response_handler(&sim800_1_current_state, USART_ReceiveData(USART2)); // вызываем функцию обработки получаемых от SIM800
+        sim800_response_handler(&state_of_sim800_num1, USART_ReceiveData(USART2)); // вызываем функцию обработки получаемых от SIM800
         //данных, передаем первым параметром ссылку на состояние конкретного модуля SIM800 (их может быть несколько)
     }
 }
