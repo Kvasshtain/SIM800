@@ -10,9 +10,18 @@
 #define yes  1
 #define no   0
 
+#define text_mode 1
+#define code_mode 0
+
+#define PWR_KEY_PIN_1 GPIO_Pin_1
+#define PWR_KEY_PORT_1 GPIOA
+
+#define PWR_KEY_DOWN GPIOA->ODR |= GPIO_Pin_1 // на линии стоит транзистор как того рекомендует даташит, так что низкий уровень это единичка на пине управления транзистором
+#define PWR_KEY_UP GPIOA->ODR &= ~GPIO_Pin_1
+
 #define exit_and_wait 0
 
-#define CURRENT_CMD_SIZE 16 // размер буфера под передаваемую SIM800 команду
+#define CURRENT_CMD_SIZE 256 // размер буфера под передаваемую SIM800 команду
 #define REC_BUF_SIZE 256    // размер буфера под принимаемые от SIM800 данные (для случая получения больших объемов данных требуется увеличить это число)
 #define DATA_BUF_SIZE 256   // размер буфера под передаваемые в SIM800 данные (для случая отправки больших объемов данных требуется увеличить это число)
 #define SEND_SMS_DATA_SIZE 256   // размер буфера под отправляемое СМС сообщение
@@ -55,6 +64,7 @@ struct sim800_current_state{
     uint8_t rec_phone_number[PHONE_NUM_SIZE];       // текущий номер телефона принятого СМС сообщения
     uint8_t send_SMS_data[SEND_SMS_DATA_SIZE];      // буфер для передаваемых СМС сообщений
     uint8_t rec_SMS_data[REC_SMS_DATA_SIZE];        // буфер для принимаемых СМС сообщений
+    void (*PWR_KEY_handler)(void);                  // указатель на функцию включения конкретного модуля SIM800
 };
 
 extern struct sim800_current_state state_of_sim800_num1; // модулей может быть несколько
@@ -70,10 +80,14 @@ void process_cmd(uint8_t is_responce, uint8_t current_pos, struct sim800_current
 void sim800_response_handler(struct sim800_current_state *current_state, uint8_t data); // функция вызываемая из обработчика прерывания по приему символов от SIM800
 
 
-void sim800_AT_request(struct sim800_current_state * current_state); // Функция отправки запроса на автонастройку baudrate модуля SIM800 (команда "AT")
+uint8_t sim800_AT_request(struct sim800_current_state * current_state); // Функция отправки запроса на автонастройку baudrate модуля SIM800 (команда "AT")
 void sim800_AT_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT"
 
-void sim800_ATplusCMGS_request(struct sim800_current_state * current_state, uint8_t * phone_number, uint8_t * SMS_data); // Функция отправки СМС SIM800 (команда "AT+CMGS=«ХХХХХХХХХХХ»")
+
+uint8_t sim800_ATplusCMGF_request(struct sim800_current_state * current_state, uint8_t * mode); // Функция переключения SIM800 в текстовый режим (команда "AT+CMGF=1 или 0 1-включить, 0-выключить")
+void sim800_ATplusCMGF_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGF=0/1"
+
+uint8_t sim800_ATplusCMGS_request(struct sim800_current_state * current_state, uint8_t * phone_number, uint8_t * SMS_data); // Функция отправки СМС SIM800 (команда "AT+CMGS=«ХХХХХХХХХХХ»")
 void sim800_ATplusCMGS_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGS=«ХХХХХХХХХХХ»"
 
 void unexpec_message_parse(struct sim800_current_state *current_state); //функция парсинга внезапных сообщений от SIM800 (например пришла SMS)

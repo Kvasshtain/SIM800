@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "misc.h"
+
+
 #include "SIM800.h"
 
 //uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
@@ -26,7 +29,7 @@ void SetupClock(void)
 {
     // Настраиваем тактирование АЦП
     RCC_ADCCLKConfig(RCC_PCLK2_Div2);
-    /* Enable USART1, USART2 and GPIOA, GPIOB, GPIOC and ADC1 clock                                        */
+    /* Enable USART1, USART2 and GPIOA, GPIOB, GPIOC and ADC1 clock */
     RCC_APB2PeriphClockCmd (RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC | RCC_APB2Periph_ADC1 , ENABLE);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
 
@@ -60,6 +63,7 @@ void SetupGPIO(void)
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
+    USR_LED_OFF;// тушим пользовательский светодиод в начале работы
 
     /** Configure pins as GPIO
     PB3 - PB9, PB12 - PB15 ------> GPIO_Input Конфигурация задаваемая DIP-переключателями
@@ -157,7 +161,7 @@ void SetupUSART2(void)
     GPIO_InitTypeDef  GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
 
-    //    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
+    //    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART2
     //    rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
 
 
@@ -200,15 +204,34 @@ void SetupUSART2(void)
                            the SCLK pin
     */
     USART_InitStructure.USART_BaudRate            = 115200;
+
     USART_InitStructure.USART_WordLength          = USART_WordLength_8b;
     USART_InitStructure.USART_StopBits            = USART_StopBits_1;
     USART_InitStructure.USART_Parity              = USART_Parity_No ;
     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
     USART_InitStructure.USART_Mode                = USART_Mode_Rx | USART_Mode_Tx;
     USART_Init(USART2, &USART_InitStructure);
+
+    //USART2->BRR=0x280; //BaudRate 115200
+
     USART_Cmd(USART2, ENABLE);
 
     USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+
+
+
+
+    NVIC_InitTypeDef NVIC_InitStructure;
+
+    /* Enable the USARTx Interrupt */
+    NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+
+
 }
 
 //Функция отправки байта в UART1
@@ -234,8 +257,6 @@ void send_str_uart1(char * string)
         send_to_uart1(string[i]);
         i++;
     }
-    //send_to_uart('\r');
-    //send_to_uart('\n');
 }
 
 //Функция отправки строки в UART2
@@ -247,20 +268,6 @@ void send_str_uart2(char * string)
         send_to_uart2(string[i]);
         i++;
     }
-    //send_to_uart('\r');
-    //send_to_uart('\n');
-}
-
-//Функция отправки строки в UART2 с добавлением в конец символов \r для правильного вывода AT команд
-void send_str_uart2_plus_r(char * string)
-{
-    uint8_t i=0;
-    while(string[i])
-    {
-        send_to_uart2(string[i]);
-        i++;
-    }
-    send_to_uart2('\r');
 }
 
 // настройка АЦП
@@ -325,7 +332,7 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
 
-    //if (USART_GetITStatus(USART1, USART_FLAG_RXNE) == SET)
+	//if (USART_GetITStatus(USART1, USART_FLAG_RXNE) == SET)
     if((USART2->SR & USART_SR_RXNE)!=0)
     {
         USART_ClearITPendingBit(USART2, USART_FLAG_RXNE);
