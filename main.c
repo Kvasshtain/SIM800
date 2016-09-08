@@ -15,60 +15,84 @@ int i;
 //**********************************************************************************************************
 void Sys_Init(void) // функция первоначальной инициализации системы
 {
-	SetupClock();
-	SetupGPIO();
-	SetupUSART1();
-	SetupUSART2();
-	InitADC();
+    SetupClock();
+    SetupGPIO();
+    SetupUSART1();
+    SetupUSART2();
+    InitADC();
 }
 
 int main(void)
 {
-	Sys_Init(); // первоначальная инициализация системы
+    Sys_Init(); // первоначальная инициализация системы
 
 
-	    // инициализация первого SIM800
-	    sim800_init(&state_of_sim800_num1, send_str_uart2); // Первый SIM800 сидит на UART2
+    // инициализация первого SIM800
+    sim800_init(&state_of_sim800_num1, send_str_uart2); // Первый SIM800 сидит на UART2
 
 
-	    volatile int i,j;
+    volatile int i,j;
 
+    for(i=0;i<0x1000000;i++);
+    {
+        for(j=0;j<0x500000;j++);
+    }
 
+    sim800_ATplusCMGF_request(&state_of_sim800_num1, text_mode); // переключение в текстовый режим воода SMS
 
-    sim800_ATplusCMGF_request(&state_of_sim800_num1, text_mode);
+    for(i=0;i<0x1000000;i++);
+    {
+        for(j=0;j<0x500000;j++);
+    }
 
+    //    sim800_ATplusCMGD_request(&state_of_sim800_num1, 1, 4); // удаление всех SMS
+    //
+    //	for(i=0;i<0x1000000;i++);
+    //	{
+    //	    for(j=0;j<0x500000;j++);
+    //	}
 
-	for(i=0;i<0x1000000;i++);
-	{
-	    for(j=0;j<0x500000;j++);
-	}
+    //sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79198364844", "TEST!"); // отправка SMS
+    //for(i=0;i<0x2000000;i++);
+    //	{
+    //	    for(j=0;j<0x500000;j++);
+    //	}
 
-    //sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79198364844", "TEST!");
-    sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79658894144", "TEST!");
+    sim800_ATplusCMGR_request(&state_of_sim800_num1, 1, 0); // чтение SMS под номером 1
 
+    for(i=0;i<0x1000000;i++);
+    {
+        for(j=0;j<0x500000;j++);
+    }
 
+    sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79198364844", state_of_sim800_num1.rec_SMS_data); // отправка ответного SMS
+
+//    if (strstr(state_of_sim800_num1.rec_SMS_data,"KAS"))
+//    {
+//    	GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!
+//    }
 
     while(1)
     {
 
-    	//sim800_AT_request(&state_of_sim800_num1);
+        //sim800_AT_request(&state_of_sim800_num1);
 
-    	 for(i=0;i<0x50000;i++);
-    		    {
-    		    	for(j=0;j< 0x500000;j++);
-    		    }
-    	/* Toggle LEDs which connected to PC6*/
+        for(i=0;i<0x50000;i++);
+        {
+            for(j=0;j< 0x500000;j++);
+        }
+        /* Toggle LEDs which connected to PC6*/
 
 
 
-    	        /* delay */
-    	        //for(i=0;i<0x100000;i++);
+        /* delay */
+        //for(i=0;i<0x100000;i++);
 
-    	        /* Toggle LEDs which connected to PC9*/
+        /* Toggle LEDs which connected to PC9*/
 
-    	        //GPIOA->ODR ^= GPIO_Pin_0;
+        //GPIOA->ODR ^= GPIO_Pin_0;
 
-    	        /* delay */
-    	       // for(i=0;i<0x100000;i++);
+        /* delay */
+        // for(i=0;i<0x100000;i++);
     }
 }

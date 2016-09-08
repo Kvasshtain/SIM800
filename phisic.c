@@ -332,7 +332,7 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
 
-	//if (USART_GetITStatus(USART1, USART_FLAG_RXNE) == SET)
+    //if (USART_GetITStatus(USART1, USART_FLAG_RXNE) == SET)
     if((USART2->SR & USART_SR_RXNE)!=0)
     {
         USART_ClearITPendingBit(USART2, USART_FLAG_RXNE);
