@@ -67,10 +67,10 @@ int main(void)
 
     sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79198364844", state_of_sim800_num1.rec_SMS_data); // отправка ответного SMS
 
-//    if (strstr(state_of_sim800_num1.rec_SMS_data,"KAS"))
-//    {
-//    	GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!
-//    }
+    //    if (strstr(state_of_sim800_num1.rec_SMS_data,"KAS"))
+    //    {
+    //    	GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!
+    //    }
 
     while(1)
     {
