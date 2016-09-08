@@ -1,3 +1,3 @@
-Проект драйвера SIM800 для микроконтроллеров. Частично совместим с SIM900 и SIM300. Код проверен на STM32F100C8T6.
+п»їРџСЂРѕРµРєС‚ РґСЂР°Р№РІРµСЂР° SIM800 РґР»СЏ РјРёРєСЂРѕРєРѕРЅС‚СЂРѕР»Р»РµСЂРѕРІ. Р§Р°СЃС‚РёС‡РЅРѕ СЃРѕРІРјРµСЃС‚РёРј СЃ SIM900 Рё SIM300. РљРѕРґ РїСЂРѕРІРµСЂРµРЅ РЅР° STM32F100C8T6.
 
 SIM800 driver project for microcontrollers. Partially compatible with SIM900 and SIM300. The code is verified on STM32F100C8T6.
