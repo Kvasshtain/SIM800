@@ -1,4 +1,4 @@
-#ifndef __SIM800_H_
+п»ї#ifndef __SIM800_H_
 #define __SIM800_H_
 
 #define busy 1
@@ -19,94 +19,94 @@
 #define PWR_KEY_PIN_1 GPIO_Pin_1
 #define PWR_KEY_PORT_1 GPIOA
 
-#define PWR_KEY_DOWN GPIOA->ODR |= GPIO_Pin_1 // на линии стоит транзистор как того рекомендует даташит, так что низкий уровень это единичка на пине управления транзистором
+#define PWR_KEY_DOWN GPIOA->ODR |= GPIO_Pin_1 // РЅР° Р»РёРЅРёРё СЃС‚РѕРёС‚ С‚СЂР°РЅР·РёСЃС‚РѕСЂ РєР°Рє С‚РѕРіРѕ СЂРµРєРѕРјРµРЅРґСѓРµС‚ РґР°С‚Р°С€РёС‚, С‚Р°Рє С‡С‚Рѕ РЅРёР·РєРёР№ СѓСЂРѕРІРµРЅСЊ СЌС‚Рѕ РµРґРёРЅРёС‡РєР° РЅР° РїРёРЅРµ СѓРїСЂР°РІР»РµРЅРёСЏ С‚СЂР°РЅР·РёСЃС‚РѕСЂРѕРј
 #define PWR_KEY_UP GPIOA->ODR &= ~GPIO_Pin_1
 
 #define exit_and_wait 0
 
-#define CURRENT_CMD_SIZE 256     // размер буфера под передаваемую SIM800 команду
-#define REC_BUF_SIZE 256         // размер буфера под принимаемые от SIM800 данные (для случая получения больших объемов данных требуется увеличить это число)
-#define DATA_BUF_SIZE 256        // размер буфера под передаваемые в SIM800 данные (для случая отправки больших объемов данных требуется увеличить это число)
-#define SEND_SMS_DATA_SIZE 256   // размер буфера под отправляемое СМС сообщение
-#define REC_SMS_DATA_SIZE 256    // размер буфера под принимаемое СМС сообщение
-#define PHONE_NUM_SIZE 16        // размер буфера под телефонный номер сделал с запасом (достаточно 11 символов, но выравнил на степень двойки)
+#define CURRENT_CMD_SIZE 256     // СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РїРѕРґ РїРµСЂРµРґР°РІР°РµРјСѓСЋ SIM800 РєРѕРјР°РЅРґСѓ
+#define REC_BUF_SIZE 256         // СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РїРѕРґ РїСЂРёРЅРёРјР°РµРјС‹Рµ РѕС‚ SIM800 РґР°РЅРЅС‹Рµ (РґР»СЏ СЃР»СѓС‡Р°СЏ РїРѕР»СѓС‡РµРЅРёСЏ Р±РѕР»СЊС€РёС… РѕР±СЉРµРјРѕРІ РґР°РЅРЅС‹С… С‚СЂРµР±СѓРµС‚СЃСЏ СѓРІРµР»РёС‡РёС‚СЊ СЌС‚Рѕ С‡РёСЃР»Рѕ)
+#define DATA_BUF_SIZE 256        // СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РїРѕРґ РїРµСЂРµРґР°РІР°РµРјС‹Рµ РІ SIM800 РґР°РЅРЅС‹Рµ (РґР»СЏ СЃР»СѓС‡Р°СЏ РѕС‚РїСЂР°РІРєРё Р±РѕР»СЊС€РёС… РѕР±СЉРµРјРѕРІ РґР°РЅРЅС‹С… С‚СЂРµР±СѓРµС‚СЃСЏ СѓРІРµР»РёС‡РёС‚СЊ СЌС‚Рѕ С‡РёСЃР»Рѕ)
+#define SEND_SMS_DATA_SIZE 256   // СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РїРѕРґ РѕС‚РїСЂР°РІР»СЏРµРјРѕРµ РЎРњРЎ СЃРѕРѕР±С‰РµРЅРёРµ
+#define REC_SMS_DATA_SIZE 256    // СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РїРѕРґ РїСЂРёРЅРёРјР°РµРјРѕРµ РЎРњРЎ СЃРѕРѕР±С‰РµРЅРёРµ
+#define PHONE_NUM_SIZE 16        // СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РїРѕРґ С‚РµР»РµС„РѕРЅРЅС‹Р№ РЅРѕРјРµСЂ СЃРґРµР»Р°Р» СЃ Р·Р°РїР°СЃРѕРј (РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ 11 СЃРёРјРІРѕР»РѕРІ, РЅРѕ РІС‹СЂР°РІРЅРёР» РЅР° СЃС‚РµРїРµРЅСЊ РґРІРѕР№РєРё)
 
-// стадии процесса общения с модулем SIM800
+// СЃС‚Р°РґРёРё РїСЂРѕС†РµСЃСЃР° РѕР±С‰РµРЅРёСЏ СЃ РјРѕРґСѓР»РµРј SIM800
 enum com_stage {
-    req_sent,         //запрос отправлен, но ответ еще не получен
-    resp_rec,         //ответ получен, но еще не обработан
-    proc_completed    //обработка ответа на запрос завершена
+    req_sent,         //Р·Р°РїСЂРѕСЃ РѕС‚РїСЂР°РІР»РµРЅ, РЅРѕ РѕС‚РІРµС‚ РµС‰Рµ РЅРµ РїРѕР»СѓС‡РµРЅ
+    resp_rec,         //РѕС‚РІРµС‚ РїРѕР»СѓС‡РµРЅ, РЅРѕ РµС‰Рµ РЅРµ РѕР±СЂР°Р±РѕС‚Р°РЅ
+    proc_completed    //РѕР±СЂР°Р±РѕС‚РєР° РѕС‚РІРµС‚Р° РЅР° Р·Р°РїСЂРѕСЃ Р·Р°РІРµСЂС€РµРЅР°
 };
 
-//// Структура представляющая из себя определенную AT-команду
+//// РЎС‚СЂСѓРєС‚СѓСЂР° РїСЂРµРґСЃС‚Р°РІР»СЏСЋС‰Р°СЏ РёР· СЃРµР±СЏ РѕРїСЂРµРґРµР»РµРЅРЅСѓСЋ AT-РєРѕРјР°РЅРґСѓ
 //struct request {
-//	char current_cmd[CURRENT_CMD_SIZE]; // Сама команда
+//	char current_cmd[CURRENT_CMD_SIZE]; // РЎР°РјР° РєРѕРјР°РЅРґР°
 //	void (*response_handler)(uint8_t * responce, uint8_t * result_of_last_execution, enum com_stage communication_stage, void (*unex_resp_handler)(uint8_t * responce), uint8_t num_of_sms;);
-//	// указатель на обработчик ответа для данной команды
-//	// должен принимать:1) указатель на буфер где лежит сформированный в прерывании ответ
-//	//                  2) указатель на то куда сложить результат обработки ответа
-//	//                  3) указатель на ячейку памяти где лежит флаг текущего состояние процесса обработки запроса. Это надо что-бы обработчик положил туда proc_completed - обработка ответа на запрос завершена
-//  //                  4) указатель на обработчик неожиданных ответов, если данная функция обнаружила, что ответ адресован не ей
+//	// СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РѕР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РґР»СЏ РґР°РЅРЅРѕР№ РєРѕРјР°РЅРґС‹
+//	// РґРѕР»Р¶РµРЅ РїСЂРёРЅРёРјР°С‚СЊ:1) СѓРєР°Р·Р°С‚РµР»СЊ РЅР° Р±СѓС„РµСЂ РіРґРµ Р»РµР¶РёС‚ СЃС„РѕСЂРјРёСЂРѕРІР°РЅРЅС‹Р№ РІ РїСЂРµСЂС‹РІР°РЅРёРё РѕС‚РІРµС‚
+//	//                  2) СѓРєР°Р·Р°С‚РµР»СЊ РЅР° С‚Рѕ РєСѓРґР° СЃР»РѕР¶РёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚ РѕР±СЂР°Р±РѕС‚РєРё РѕС‚РІРµС‚Р°
+//	//                  3) СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЏС‡РµР№РєСѓ РїР°РјСЏС‚Рё РіРґРµ Р»РµР¶РёС‚ С„Р»Р°Рі С‚РµРєСѓС‰РµРіРѕ СЃРѕСЃС‚РѕСЏРЅРёРµ РїСЂРѕС†РµСЃСЃР° РѕР±СЂР°Р±РѕС‚РєРё Р·Р°РїСЂРѕСЃР°. Р­С‚Рѕ РЅР°РґРѕ С‡С‚Рѕ-Р±С‹ РѕР±СЂР°Р±РѕС‚С‡РёРє РїРѕР»РѕР¶РёР» С‚СѓРґР° proc_completed - РѕР±СЂР°Р±РѕС‚РєР° РѕС‚РІРµС‚Р° РЅР° Р·Р°РїСЂРѕСЃ Р·Р°РІРµСЂС€РµРЅР°
+//  //                  4) СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РѕР±СЂР°Р±РѕС‚С‡РёРє РЅРµРѕР¶РёРґР°РЅРЅС‹С… РѕС‚РІРµС‚РѕРІ, РµСЃР»Рё РґР°РЅРЅР°СЏ С„СѓРЅРєС†РёСЏ РѕР±РЅР°СЂСѓР¶РёР»Р°, С‡С‚Рѕ РѕС‚РІРµС‚ Р°РґСЂРµСЃРѕРІР°РЅ РЅРµ РµР№
 //};
 
-// ГЛОБАЛЬНАЯ СТРУКТУРА СТАТУСА ПРОЦЕССА ОБМЕНА ДАННЫМИ С SIM800
-// Структура описывает текущее состояние процесса выдачи запросов и получения ответов от конкретного модуля SIM800 (их может быть несколько)
+// Р“Р›РћР‘РђР›Р¬РќРђРЇ РЎРўР РЈРљРўРЈР Рђ РЎРўРђРўРЈРЎРђ РџР РћР¦Р•РЎРЎРђ РћР‘РњР•РќРђ Р”РђРќРќР«РњР РЎ SIM800
+// РЎС‚СЂСѓРєС‚СѓСЂР° РѕРїРёСЃС‹РІР°РµС‚ С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РїСЂРѕС†РµСЃСЃР° РІС‹РґР°С‡Рё Р·Р°РїСЂРѕСЃРѕРІ Рё РїРѕР»СѓС‡РµРЅРёСЏ РѕС‚РІРµС‚РѕРІ РѕС‚ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РјРѕРґСѓР»СЏ SIM800 (РёС… РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ)
 struct sim800_current_state{
-    enum com_stage communication_stage;             // текущее состояние процесса обработки запроса
-    uint8_t current_pos;                            // текущая позиция последнего принятого символа в приемном буфере
-    uint8_t rec_buf[REC_BUF_SIZE];                  // приемный буфер, куда будет складываться ответ от SIM800 (используетя обработчиком прерывания)
-    uint8_t responce[REC_BUF_SIZE];                 // буфер с сформированным ответом от SIM800 для обработки ответа на посланный запрос или внезапного сообщения
-    //struct request *current_req;                  // указатель на текущую обрабатываемую команду
-    void (*send_uart_function)(char *);             // указатель на функцию отправки данных в конкретный UART на котором сидит конкретный модуль SIM800
-    uint8_t result_of_last_execution;               // результат выполнения последней команды 0 - OK, 1 - fail
-    uint8_t num_of_sms;                             // число пришедших СМС хранящихся в SIM-карте
-    void (*unex_resp_handler)(struct sim800_current_state *current_state); // указатель на обработчик неожиданного ответа
-    char current_cmd[CURRENT_CMD_SIZE];             // отправленная команда
-    void (*response_handler)(struct sim800_current_state *current_state); // указатель на обработчик ответа для текущей обрабатываемой команды
-    uint8_t send_phone_number[PHONE_NUM_SIZE];      // текущий номер телефона для отправляемых СМС сообщений
-    uint8_t rec_phone_number[PHONE_NUM_SIZE];       // текущий номер телефона принятого СМС сообщения
-    uint8_t send_SMS_data[SEND_SMS_DATA_SIZE];      // буфер для передаваемых СМС сообщений
-    uint8_t rec_SMS_data[REC_SMS_DATA_SIZE];        // буфер для принимаемых СМС сообщений
-    void (*PWR_KEY_handler)(void);                  // указатель на функцию включения конкретного модуля SIM800
-    uint8_t is_Call_Ready;                          // Флаг готовности обрабатывать звонки и звонить может быть ready или not_ready
-    uint8_t is_SMS_Ready;                           // Флаг готовности обрабатывать звонки и звонить может быть ready или not_ready
+    enum com_stage communication_stage;             // С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РїСЂРѕС†РµСЃСЃР° РѕР±СЂР°Р±РѕС‚РєРё Р·Р°РїСЂРѕСЃР°
+    uint8_t current_pos;                            // С‚РµРєСѓС‰Р°СЏ РїРѕР·РёС†РёСЏ РїРѕСЃР»РµРґРЅРµРіРѕ РїСЂРёРЅСЏС‚РѕРіРѕ СЃРёРјРІРѕР»Р° РІ РїСЂРёРµРјРЅРѕРј Р±СѓС„РµСЂРµ
+    uint8_t rec_buf[REC_BUF_SIZE];                  // РїСЂРёРµРјРЅС‹Р№ Р±СѓС„РµСЂ, РєСѓРґР° Р±СѓРґРµС‚ СЃРєР»Р°РґС‹РІР°С‚СЊСЃСЏ РѕС‚РІРµС‚ РѕС‚ SIM800 (РёСЃРїРѕР»СЊР·СѓРµС‚СЏ РѕР±СЂР°Р±РѕС‚С‡РёРєРѕРј РїСЂРµСЂС‹РІР°РЅРёСЏ)
+    uint8_t responce[REC_BUF_SIZE];                 // Р±СѓС„РµСЂ СЃ СЃС„РѕСЂРјРёСЂРѕРІР°РЅРЅС‹Рј РѕС‚РІРµС‚РѕРј РѕС‚ SIM800 РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё РѕС‚РІРµС‚Р° РЅР° РїРѕСЃР»Р°РЅРЅС‹Р№ Р·Р°РїСЂРѕСЃ РёР»Рё РІРЅРµР·Р°РїРЅРѕРіРѕ СЃРѕРѕР±С‰РµРЅРёСЏ
+    //struct request *current_req;                  // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° С‚РµРєСѓС‰СѓСЋ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјСѓСЋ РєРѕРјР°РЅРґСѓ
+    void (*send_uart_function)(char *);             // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° С„СѓРЅРєС†РёСЋ РѕС‚РїСЂР°РІРєРё РґР°РЅРЅС‹С… РІ РєРѕРЅРєСЂРµС‚РЅС‹Р№ UART РЅР° РєРѕС‚РѕСЂРѕРј СЃРёРґРёС‚ РєРѕРЅРєСЂРµС‚РЅС‹Р№ РјРѕРґСѓР»СЊ SIM800
+    uint8_t result_of_last_execution;               // СЂРµР·СѓР»СЊС‚Р°С‚ РІС‹РїРѕР»РЅРµРЅРёСЏ РїРѕСЃР»РµРґРЅРµР№ РєРѕРјР°РЅРґС‹ 0 - OK, 1 - fail
+    uint8_t num_of_sms;                             // С‡РёСЃР»Рѕ РїСЂРёС€РµРґС€РёС… РЎРњРЎ С…СЂР°РЅСЏС‰РёС…СЃСЏ РІ SIM-РєР°СЂС‚Рµ
+    void (*unex_resp_handler)(struct sim800_current_state *current_state); // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РѕР±СЂР°Р±РѕС‚С‡РёРє РЅРµРѕР¶РёРґР°РЅРЅРѕРіРѕ РѕС‚РІРµС‚Р°
+    char current_cmd[CURRENT_CMD_SIZE];             // РѕС‚РїСЂР°РІР»РµРЅРЅР°СЏ РєРѕРјР°РЅРґР°
+    void (*response_handler)(struct sim800_current_state *current_state); // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РѕР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РґР»СЏ С‚РµРєСѓС‰РµР№ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјРѕР№ РєРѕРјР°РЅРґС‹
+    uint8_t send_phone_number[PHONE_NUM_SIZE];      // С‚РµРєСѓС‰РёР№ РЅРѕРјРµСЂ С‚РµР»РµС„РѕРЅР° РґР»СЏ РѕС‚РїСЂР°РІР»СЏРµРјС‹С… РЎРњРЎ СЃРѕРѕР±С‰РµРЅРёР№
+    uint8_t rec_phone_number[PHONE_NUM_SIZE];       // С‚РµРєСѓС‰РёР№ РЅРѕРјРµСЂ С‚РµР»РµС„РѕРЅР° РїСЂРёРЅСЏС‚РѕРіРѕ РЎРњРЎ СЃРѕРѕР±С‰РµРЅРёСЏ
+    uint8_t send_SMS_data[SEND_SMS_DATA_SIZE];      // Р±СѓС„РµСЂ РґР»СЏ РїРµСЂРµРґР°РІР°РµРјС‹С… РЎРњРЎ СЃРѕРѕР±С‰РµРЅРёР№
+    uint8_t rec_SMS_data[REC_SMS_DATA_SIZE];        // Р±СѓС„РµСЂ РґР»СЏ РїСЂРёРЅРёРјР°РµРјС‹С… РЎРњРЎ СЃРѕРѕР±С‰РµРЅРёР№
+    void (*PWR_KEY_handler)(void);                  // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° С„СѓРЅРєС†РёСЋ РІРєР»СЋС‡РµРЅРёСЏ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РјРѕРґСѓР»СЏ SIM800
+    uint8_t is_Call_Ready;                          // Р¤Р»Р°Рі РіРѕС‚РѕРІРЅРѕСЃС‚Рё РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ Р·РІРѕРЅРєРё Рё Р·РІРѕРЅРёС‚СЊ РјРѕР¶РµС‚ Р±С‹С‚СЊ ready РёР»Рё not_ready
+    uint8_t is_SMS_Ready;                           // Р¤Р»Р°Рі РіРѕС‚РѕРІРЅРѕСЃС‚Рё РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ Р·РІРѕРЅРєРё Рё Р·РІРѕРЅРёС‚СЊ РјРѕР¶РµС‚ Р±С‹С‚СЊ ready РёР»Рё not_ready
 };
 
-extern struct sim800_current_state state_of_sim800_num1; // модулей может быть несколько
+extern struct sim800_current_state state_of_sim800_num1; // РјРѕРґСѓР»РµР№ РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ
 
-void sim800_PWRKEY_on(void); // Функция включения модуля SIM800
-//!!!!!!inline void Sim800_WriteCmd(const char *cmd); // Функция отправки данных в UART на котором сидит Sim800
-//void sim800_AT_request(struct sim800_current_state *current_state); // Функция отправки запроса на автонастройку baudrate модуля SIM800
+void sim800_PWRKEY_on(void); // Р¤СѓРЅРєС†РёСЏ РІРєР»СЋС‡РµРЅРёСЏ РјРѕРґСѓР»СЏ SIM800
+//!!!!!!inline void Sim800_WriteCmd(const char *cmd); // Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё РґР°РЅРЅС‹С… РІ UART РЅР° РєРѕС‚РѕСЂРѕРј СЃРёРґРёС‚ Sim800
+//void sim800_AT_request(struct sim800_current_state *current_state); // Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё Р·Р°РїСЂРѕСЃР° РЅР° Р°РІС‚РѕРЅР°СЃС‚СЂРѕР№РєСѓ baudrate РјРѕРґСѓР»СЏ SIM800
 
-uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uart_function)(char *)); // Функция инициализации одного из модулей SIM800
-int8_t sim800_request(struct sim800_current_state *current_state); // функция отправки запросов в SIM800
-void process_echo(uint8_t is_responce, uint8_t current_pos, struct sim800_current_state *current_state); // Обработка ЭХО
-void process_cmd(uint8_t is_responce, uint8_t current_pos, struct sim800_current_state *current_state);  // Обработка ответа на команду
-void call_handler(struct sim800_current_state * current_state); // Вспомогательная функция копирования содержимого приемного буфера в буфер принятого ответа и вызова соответствующего обработчика принятого ответа
-void sim800_response_handler(struct sim800_current_state *current_state, uint8_t data); // функция вызываемая из обработчика прерывания по приему символов от SIM800
+uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uart_function)(char *)); // Р¤СѓРЅРєС†РёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РѕРґРЅРѕРіРѕ РёР· РјРѕРґСѓР»РµР№ SIM800
+int8_t sim800_request(struct sim800_current_state *current_state); // С„СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё Р·Р°РїСЂРѕСЃРѕРІ РІ SIM800
+void process_echo(uint8_t is_responce, uint8_t current_pos, struct sim800_current_state *current_state); // РћР±СЂР°Р±РѕС‚РєР° Р­РҐРћ
+void process_cmd(uint8_t is_responce, uint8_t current_pos, struct sim800_current_state *current_state);  // РћР±СЂР°Р±РѕС‚РєР° РѕС‚РІРµС‚Р° РЅР° РєРѕРјР°РЅРґСѓ
+void call_handler(struct sim800_current_state * current_state); // Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅР°СЏ С„СѓРЅРєС†РёСЏ РєРѕРїРёСЂРѕРІР°РЅРёСЏ СЃРѕРґРµСЂР¶РёРјРѕРіРѕ РїСЂРёРµРјРЅРѕРіРѕ Р±СѓС„РµСЂР° РІ Р±СѓС„РµСЂ РїСЂРёРЅСЏС‚РѕРіРѕ РѕС‚РІРµС‚Р° Рё РІС‹Р·РѕРІР° СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРіРѕ РѕР±СЂР°Р±РѕС‚С‡РёРєР° РїСЂРёРЅСЏС‚РѕРіРѕ РѕС‚РІРµС‚Р°
+void sim800_response_handler(struct sim800_current_state *current_state, uint8_t data); // С„СѓРЅРєС†РёСЏ РІС‹Р·С‹РІР°РµРјР°СЏ РёР· РѕР±СЂР°Р±РѕС‚С‡РёРєР° РїСЂРµСЂС‹РІР°РЅРёСЏ РїРѕ РїСЂРёРµРјСѓ СЃРёРјРІРѕР»РѕРІ РѕС‚ SIM800
 
 
-uint8_t sim800_AT_request(struct sim800_current_state * current_state); // Функция отправки запроса на автонастройку baudrate модуля SIM800 (команда "AT")
-void sim800_AT_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT"
+uint8_t sim800_AT_request(struct sim800_current_state * current_state); // Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё Р·Р°РїСЂРѕСЃР° РЅР° Р°РІС‚РѕРЅР°СЃС‚СЂРѕР№РєСѓ baudrate РјРѕРґСѓР»СЏ SIM800 (РєРѕРјР°РЅРґР° "AT")
+void sim800_AT_responce_handler(struct sim800_current_state * current_state); // РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РєРѕРјР°РЅРґС‹ "AT"
 
-uint8_t sim800_ATplusCMGF_request(struct sim800_current_state * current_state, uint8_t mode); // Функция переключения SIM800 в текстовый режим (команда "AT+CMGF=1 или 0 1-включить, 0-выключить")
-void sim800_ATplusCMGF_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGF=0/1"
+uint8_t sim800_ATplusCMGF_request(struct sim800_current_state * current_state, uint8_t mode); // Р¤СѓРЅРєС†РёСЏ РїРµСЂРµРєР»СЋС‡РµРЅРёСЏ SIM800 РІ С‚РµРєСЃС‚РѕРІС‹Р№ СЂРµР¶РёРј (РєРѕРјР°РЅРґР° "AT+CMGF=1 РёР»Рё 0 1-РІРєР»СЋС‡РёС‚СЊ, 0-РІС‹РєР»СЋС‡РёС‚СЊ")
+void sim800_ATplusCMGF_responce_handler(struct sim800_current_state * current_state); // РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РєРѕРјР°РЅРґС‹ "AT+CMGF=0/1"
 
-uint8_t sim800_ATplusCMGS_request(struct sim800_current_state * current_state, uint8_t * phone_number, uint8_t * SMS_data); // Функция отправки СМС SIM800 (команда "AT+CMGS=«ХХХХХХХХХХХ»")
-void sim800_ATplusCMGS_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGS=«ХХХХХХХХХХХ»"
+uint8_t sim800_ATplusCMGS_request(struct sim800_current_state * current_state, uint8_t * phone_number, uint8_t * SMS_data); // Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё РЎРњРЎ SIM800 (РєРѕРјР°РЅРґР° "AT+CMGS=В«РҐРҐРҐРҐРҐРҐРҐРҐРҐРҐРҐВ»")
+void sim800_ATplusCMGS_responce_handler(struct sim800_current_state * current_state); // РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РєРѕРјР°РЅРґС‹ "AT+CMGS=В«РҐРҐРҐРҐРҐРҐРҐРҐРҐРҐРҐВ»"
 
-uint8_t sim800_ATplusCMGD_request(struct sim800_current_state * current_state, uint8_t num_of_message, uint8_t mode_of_delete); // // Функция удаления СМС SIM800 (команда "AT+CMGD=1,0" 1, — номер сообщения 0, — режим удаления)
-void sim800_ATplusCMGD_responce_handler(struct sim800_current_state * current_state); // // Обработчик ответа команды "AT+CMGD=
+uint8_t sim800_ATplusCMGD_request(struct sim800_current_state * current_state, uint8_t num_of_message, uint8_t mode_of_delete); // // Р¤СѓРЅРєС†РёСЏ СѓРґР°Р»РµРЅРёСЏ РЎРњРЎ SIM800 (РєРѕРјР°РЅРґР° "AT+CMGD=1,0" 1, вЂ” РЅРѕРјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ 0, вЂ” СЂРµР¶РёРј СѓРґР°Р»РµРЅРёСЏ)
+void sim800_ATplusCMGD_responce_handler(struct sim800_current_state * current_state); // // РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РєРѕРјР°РЅРґС‹ "AT+CMGD=
 
-uint8_t sim800_ATplusCMGR_request(struct sim800_current_state * current_state, uint8_t num_of_message, uint8_t mode_of_read); // Функция отправки запроса на чтения СМС SIM800 (команда "AT+CMGR=1,0"
-// Пришлось обработку ответа разбить на стадии, т.к. ответ большой и его парсинг не успевал до прихода финального OK
-void sim800_ATplusCMGR_responce_handler_st1(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGR= - чтение SMS стадия 1 - прием ЭХО
-void sim800_ATplusCMGR_responce_handler_st2(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGR= - чтение SMS стадия 2 - прием служебных данных о SMS
-void sim800_ATplusCMGR_responce_handler_st3(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGR= - чтение SMS стадия 3 - прием самого текста SMS
-void sim800_ATplusCMGR_responce_handler_st4(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGR= - чтение SMS стадия 4 - обработка сообщения OK
-//void sim800_ATplusCMGR_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGR= - чтение SMS
+uint8_t sim800_ATplusCMGR_request(struct sim800_current_state * current_state, uint8_t num_of_message, uint8_t mode_of_read); // Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё Р·Р°РїСЂРѕСЃР° РЅР° С‡С‚РµРЅРёСЏ РЎРњРЎ SIM800 (РєРѕРјР°РЅРґР° "AT+CMGR=1,0"
+// РџСЂРёС€Р»РѕСЃСЊ РѕР±СЂР°Р±РѕС‚РєСѓ РѕС‚РІРµС‚Р° СЂР°Р·Р±РёС‚СЊ РЅР° СЃС‚Р°РґРёРё, С‚.Рє. РѕС‚РІРµС‚ Р±РѕР»СЊС€РѕР№ Рё РµРіРѕ РїР°СЂСЃРёРЅРі РЅРµ СѓСЃРїРµРІР°Р» РґРѕ РїСЂРёС…РѕРґР° С„РёРЅР°Р»СЊРЅРѕРіРѕ OK
+void sim800_ATplusCMGR_responce_handler_st1(struct sim800_current_state * current_state); // РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РєРѕРјР°РЅРґС‹ "AT+CMGR= - С‡С‚РµРЅРёРµ SMS СЃС‚Р°РґРёСЏ 1 - РїСЂРёРµРј Р­РҐРћ
+void sim800_ATplusCMGR_responce_handler_st2(struct sim800_current_state * current_state); // РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РєРѕРјР°РЅРґС‹ "AT+CMGR= - С‡С‚РµРЅРёРµ SMS СЃС‚Р°РґРёСЏ 2 - РїСЂРёРµРј СЃР»СѓР¶РµР±РЅС‹С… РґР°РЅРЅС‹С… Рѕ SMS
+void sim800_ATplusCMGR_responce_handler_st3(struct sim800_current_state * current_state); // РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РєРѕРјР°РЅРґС‹ "AT+CMGR= - С‡С‚РµРЅРёРµ SMS СЃС‚Р°РґРёСЏ 3 - РїСЂРёРµРј СЃР°РјРѕРіРѕ С‚РµРєСЃС‚Р° SMS
+void sim800_ATplusCMGR_responce_handler_st4(struct sim800_current_state * current_state); // РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РєРѕРјР°РЅРґС‹ "AT+CMGR= - С‡С‚РµРЅРёРµ SMS СЃС‚Р°РґРёСЏ 4 - РѕР±СЂР°Р±РѕС‚РєР° СЃРѕРѕР±С‰РµРЅРёСЏ OK
+//void sim800_ATplusCMGR_responce_handler(struct sim800_current_state * current_state); // РћР±СЂР°Р±РѕС‚С‡РёРє РѕС‚РІРµС‚Р° РєРѕРјР°РЅРґС‹ "AT+CMGR= - С‡С‚РµРЅРёРµ SMS
 
-void unexpec_message_parse(struct sim800_current_state *current_state); //функция парсинга внезапных сообщений от SIM800 (например пришла SMS)
-//uint8_t sim800_sendSMS(uint8_t* text_buf, uint8_t length);   // Функция отправки SMS с модуля SIM800
+void unexpec_message_parse(struct sim800_current_state *current_state); //С„СѓРЅРєС†РёСЏ РїР°СЂСЃРёРЅРіР° РІРЅРµР·Р°РїРЅС‹С… СЃРѕРѕР±С‰РµРЅРёР№ РѕС‚ SIM800 (РЅР°РїСЂРёРјРµСЂ РїСЂРёС€Р»Р° SMS)
+//uint8_t sim800_sendSMS(uint8_t* text_buf, uint8_t length);   // Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё SMS СЃ РјРѕРґСѓР»СЏ SIM800
 
 #endif

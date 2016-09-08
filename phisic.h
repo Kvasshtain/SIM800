@@ -1,4 +1,4 @@
-#include <stdio.h>
+п»ї#include <stdio.h>
 
 #ifndef PHISIC_H_INCLUDED
 #define PHISIC_H_INCLUDED
@@ -11,20 +11,20 @@
 #define USR_LED_OFF GPIOA->ODR |= GPIO_Pin_0
 #define USR_LED_ON  GPIOA->ODR &= ~GPIO_Pin_0
 
-//extern uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
-//extern int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
-//extern uint8_t rec_buf_usart1_overflow; //флаг переполнения приемного буфера
+//extern uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // Р±СѓС„РµСЂ РґР»СЏ РїСЂРёРЅРёРјР°РµРјС‹С… РґР°РЅРЅС‹С… UART1
+//extern int8_t rec_buf_last_usart1; // РёРЅРґРµРєСЃ РїРѕСЃР»РµРґРЅРµРіРѕ РЅРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅРѕРіРѕ СЃРёРјРІРѕР»Р° РІ Р±СѓС„РµСЂРµ UART1
+//extern uint8_t rec_buf_usart1_overflow; //С„Р»Р°Рі РїРµСЂРµРїРѕР»РЅРµРЅРёСЏ РїСЂРёРµРјРЅРѕРіРѕ Р±СѓС„РµСЂР°
 
-//extern uint8_t rec_buf_usart2[SIZE_BUF_UART2];  // буфер для принимаемых данных UART2
-//extern uint8_t rec_buf_last_usart2; // индекс последнего необработанного символа в буфере UART2
-//extern uint8_t rec_buf_usart2_overflow; //флаг переполнения приемного буфера
+//extern uint8_t rec_buf_usart2[SIZE_BUF_UART2];  // Р±СѓС„РµСЂ РґР»СЏ РїСЂРёРЅРёРјР°РµРјС‹С… РґР°РЅРЅС‹С… UART2
+//extern uint8_t rec_buf_last_usart2; // РёРЅРґРµРєСЃ РїРѕСЃР»РµРґРЅРµРіРѕ РЅРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅРѕРіРѕ СЃРёРјРІРѕР»Р° РІ Р±СѓС„РµСЂРµ UART2
+//extern uint8_t rec_buf_usart2_overflow; //С„Р»Р°Рі РїРµСЂРµРїРѕР»РЅРµРЅРёСЏ РїСЂРёРµРјРЅРѕРіРѕ Р±СѓС„РµСЂР°
 
-void SetupClock(void);  // Функция настройки тактирования
-void SetupUSART1(void); // Функция настройки UART1
-void SetupUSART2(void); // Функция настройки UART2
-void send_str_uart1(char * string); // отправка данных в UART2
-void send_str_uart2(char * string); // отправка данных в UART2
-void InitADC(void);     // Функция настройки АЦП
-void SetupGPIO(void);   // функция инициализации пользовательских GPIO (например управляющих светодиодом)
+void SetupClock(void);  // Р¤СѓРЅРєС†РёСЏ РЅР°СЃС‚СЂРѕР№РєРё С‚Р°РєС‚РёСЂРѕРІР°РЅРёСЏ
+void SetupUSART1(void); // Р¤СѓРЅРєС†РёСЏ РЅР°СЃС‚СЂРѕР№РєРё UART1
+void SetupUSART2(void); // Р¤СѓРЅРєС†РёСЏ РЅР°СЃС‚СЂРѕР№РєРё UART2
+void send_str_uart1(char * string); // РѕС‚РїСЂР°РІРєР° РґР°РЅРЅС‹С… РІ UART2
+void send_str_uart2(char * string); // РѕС‚РїСЂР°РІРєР° РґР°РЅРЅС‹С… РІ UART2
+void InitADC(void);     // Р¤СѓРЅРєС†РёСЏ РЅР°СЃС‚СЂРѕР№РєРё РђР¦Рџ
+void SetupGPIO(void);   // С„СѓРЅРєС†РёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёС… GPIO (РЅР°РїСЂРёРјРµСЂ СѓРїСЂР°РІР»СЏСЋС‰РёС… СЃРІРµС‚РѕРґРёРѕРґРѕРј)
 
 #endif

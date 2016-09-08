@@ -1,4 +1,4 @@
-//Includes ------------------------------------------------------------------*/
+п»ї//Includes ------------------------------------------------------------------*/
 
 #include "main.h"
 #include "phisic.h"
@@ -13,7 +13,7 @@
 int i;
 
 //**********************************************************************************************************
-void Sys_Init(void) // функция первоначальной инициализации системы
+void Sys_Init(void) // С„СѓРЅРєС†РёСЏ РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅРѕР№ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё СЃРёСЃС‚РµРјС‹
 {
     SetupClock();
     SetupGPIO();
@@ -24,11 +24,11 @@ void Sys_Init(void) // функция первоначальной инициализации системы
 
 int main(void)
 {
-    Sys_Init(); // первоначальная инициализация системы
+    Sys_Init(); // РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃРёСЃС‚РµРјС‹
 
 
-    // инициализация первого SIM800
-    sim800_init(&state_of_sim800_num1, send_str_uart2); // Первый SIM800 сидит на UART2
+    // РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїРµСЂРІРѕРіРѕ SIM800
+    sim800_init(&state_of_sim800_num1, send_str_uart2); // РџРµСЂРІС‹Р№ SIM800 СЃРёРґРёС‚ РЅР° UART2
 
 
     volatile int i,j;
@@ -38,38 +38,38 @@ int main(void)
         for(j=0;j<0x500000;j++);
     }
 
-    sim800_ATplusCMGF_request(&state_of_sim800_num1, text_mode); // переключение в текстовый режим воода SMS
+    sim800_ATplusCMGF_request(&state_of_sim800_num1, text_mode); // РїРµСЂРµРєР»СЋС‡РµРЅРёРµ РІ С‚РµРєСЃС‚РѕРІС‹Р№ СЂРµР¶РёРј РІРѕРѕРґР° SMS
 
     for(i=0;i<0x1000000;i++);
     {
         for(j=0;j<0x500000;j++);
     }
 
-    //    sim800_ATplusCMGD_request(&state_of_sim800_num1, 1, 4); // удаление всех SMS
+    //    sim800_ATplusCMGD_request(&state_of_sim800_num1, 1, 4); // СѓРґР°Р»РµРЅРёРµ РІСЃРµС… SMS
     //
     //	for(i=0;i<0x1000000;i++);
     //	{
     //	    for(j=0;j<0x500000;j++);
     //	}
 
-    //sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79198364844", "TEST!"); // отправка SMS
+    //sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79198364844", "TEST!"); // РѕС‚РїСЂР°РІРєР° SMS
     //for(i=0;i<0x2000000;i++);
     //	{
     //	    for(j=0;j<0x500000;j++);
     //	}
 
-    sim800_ATplusCMGR_request(&state_of_sim800_num1, 1, 0); // чтение SMS под номером 1
+    sim800_ATplusCMGR_request(&state_of_sim800_num1, 1, 0); // С‡С‚РµРЅРёРµ SMS РїРѕРґ РЅРѕРјРµСЂРѕРј 1
 
     for(i=0;i<0x1000000;i++);
     {
         for(j=0;j<0x500000;j++);
     }
 
-    sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79198364844", state_of_sim800_num1.rec_SMS_data); // отправка ответного SMS
+    sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79198364844", state_of_sim800_num1.rec_SMS_data); // РѕС‚РїСЂР°РІРєР° РѕС‚РІРµС‚РЅРѕРіРѕ SMS
 
     //    if (strstr(state_of_sim800_num1.rec_SMS_data,"KAS"))
     //    {
-    //    	GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!
+    //    	GPIOA->ODR &= ~GPIO_Pin_0; // РћРўР›РђР”РљРђ!!!
     //    }
 
     while(1)

@@ -1,4 +1,4 @@
-/* Includes ------------------------------------------------------------------*/
+п»ї/* Includes ------------------------------------------------------------------*/
 #include "phisic.h"
 
 #include "stm32f10x.h"
@@ -14,20 +14,20 @@
 
 #include "SIM800.h"
 
-//uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
-//int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
-//uint8_t rec_buf_usart1_overflow; //флаг переполнения приемного буфера
+//uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // Р±СѓС„РµСЂ РґР»СЏ РїСЂРёРЅРёРјР°РµРјС‹С… РґР°РЅРЅС‹С… UART1
+//int8_t rec_buf_last_usart1; // РёРЅРґРµРєСЃ РїРѕСЃР»РµРґРЅРµРіРѕ РЅРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅРѕРіРѕ СЃРёРјРІРѕР»Р° РІ Р±СѓС„РµСЂРµ UART1
+//uint8_t rec_buf_usart1_overflow; //С„Р»Р°Рі РїРµСЂРµРїРѕР»РЅРµРЅРёСЏ РїСЂРёРµРјРЅРѕРіРѕ Р±СѓС„РµСЂР°
 
-//uint8_t rec_buf_usart2[SIZE_BUF_UART2];  // буфер для принимаемых данных UART2
-//uint8_t rec_buf_last_usart2; // индекс последнего необработанного символа в буфере UART2
-//uint8_t rec_buf_usart2_overflow; //флаг переполнения приемного буфера
+//uint8_t rec_buf_usart2[SIZE_BUF_UART2];  // Р±СѓС„РµСЂ РґР»СЏ РїСЂРёРЅРёРјР°РµРјС‹С… РґР°РЅРЅС‹С… UART2
+//uint8_t rec_buf_last_usart2; // РёРЅРґРµРєСЃ РїРѕСЃР»РµРґРЅРµРіРѕ РЅРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅРѕРіРѕ СЃРёРјРІРѕР»Р° РІ Р±СѓС„РµСЂРµ UART2
+//uint8_t rec_buf_usart2_overflow; //С„Р»Р°Рі РїРµСЂРµРїРѕР»РЅРµРЅРёСЏ РїСЂРёРµРјРЅРѕРіРѕ Р±СѓС„РµСЂР°
 
 /***************************************************************************//**
- Настройка тактирования
+ РќР°СЃС‚СЂРѕР№РєР° С‚Р°РєС‚РёСЂРѕРІР°РЅРёСЏ
  ******************************************************************************/
 void SetupClock(void)
 {
-    // Настраиваем тактирование АЦП
+    // РќР°СЃС‚СЂР°РёРІР°РµРј С‚Р°РєС‚РёСЂРѕРІР°РЅРёРµ РђР¦Рџ
     RCC_ADCCLKConfig(RCC_PCLK2_Div2);
     /* Enable USART1, USART2 and GPIOA, GPIOB, GPIOC and ADC1 clock */
     RCC_APB2PeriphClockCmd (RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC | RCC_APB2Periph_ADC1 , ENABLE);
@@ -36,16 +36,16 @@ void SetupClock(void)
 }
 
 /***************************************************************************//**
- Настраиваем входы и выходы
+ РќР°СЃС‚СЂР°РёРІР°РµРј РІС…РѕРґС‹ Рё РІС‹С…РѕРґС‹
  ******************************************************************************/
 void SetupGPIO(void)
 {
     GPIO_InitTypeDef  GPIO_InitStructure;
 
     /** Configure pins as GPIO
-    PC13    ------> GPIO_Output Сигнал PL для дискретных входов
-    PC14    ------> GPIO_Output Сигнал CP для дискретных входов
-    PC15    ------> GPIO_Input  Сигнал QH от  дискретных входов
+    PC13    ------> GPIO_Output РЎРёРіРЅР°Р» PL РґР»СЏ РґРёСЃРєСЂРµС‚РЅС‹С… РІС…РѕРґРѕРІ
+    PC14    ------> GPIO_Output РЎРёРіРЅР°Р» CP РґР»СЏ РґРёСЃРєСЂРµС‚РЅС‹С… РІС…РѕРґРѕРІ
+    PC15    ------> GPIO_Input  РЎРёРіРЅР°Р» QH РѕС‚  РґРёСЃРєСЂРµС‚РЅС‹С… РІС…РѕРґРѕРІ
     */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
@@ -53,28 +53,28 @@ void SetupGPIO(void)
     GPIO_Init(GPIOC, &GPIO_InitStructure);
 
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //вход с подтяжкой к питанию
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //РІС…РѕРґ СЃ РїРѕРґС‚СЏР¶РєРѕР№ Рє РїРёС‚Р°РЅРёСЋ
     GPIO_Init(GPIOC, &GPIO_InitStructure);
 
     /** Configure pins as GPIO
-    PA0     ------> GPIO_Output Сигнал пользовательский светодиод (LED)
+    PA0     ------> GPIO_Output РЎРёРіРЅР°Р» РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№ СЃРІРµС‚РѕРґРёРѕРґ (LED)
     */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
-    USR_LED_OFF;// тушим пользовательский светодиод в начале работы
+    USR_LED_OFF;// С‚СѓС€РёРј РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№ СЃРІРµС‚РѕРґРёРѕРґ РІ РЅР°С‡Р°Р»Рµ СЂР°Р±РѕС‚С‹
 
     /** Configure pins as GPIO
-    PB3 - PB9, PB12 - PB15 ------> GPIO_Input Конфигурация задаваемая DIP-переключателями
+    PB3 - PB9, PB12 - PB15 ------> GPIO_Input РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ Р·Р°РґР°РІР°РµРјР°СЏ DIP-РїРµСЂРµРєР»СЋС‡Р°С‚РµР»СЏРјРё
     */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //вход с подтяжкой к питанию
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //РІС…РѕРґ СЃ РїРѕРґС‚СЏР¶РєРѕР№ Рє РїРёС‚Р°РЅРёСЋ
     GPIO_Init(GPIOB, &GPIO_InitStructure);
 }
 
 /***************************************************************************//**
- * @brief Init USART1 на нем сидит RS485
+ * @brief Init USART1 РЅР° РЅРµРј СЃРёРґРёС‚ RS485
  ******************************************************************************/
 void SetupUSART1(void)
 {
@@ -83,12 +83,12 @@ void SetupUSART1(void)
     USART_InitTypeDef USART_InitStructure;
     DMA_InitTypeDef DMA_InitStructure;
 
-    //    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
-    //  	rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
+    //    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // РѕР±РЅСѓР»СЏРµРј Р±СѓС„РµСЂ РґР»СЏ РїСЂРёРЅРёРјР°РµРјС‹С… РґР°РЅРЅС‹С… UART1
+    //  	rec_buf_last_usart1 = -1;                   // РёРЅРґРµРєСЃ РїРѕСЃР»РµРґРЅРµРіРѕ РЅРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅРѕРіРѕ СЃРёРјРІРѕР»Р° РїСЂРёРЅСЏС‚РѕРіРѕ РѕС‚ UART1 СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІ -1
 
 
     /** Configure pins as GPIO
-    PA8    ------> GPIO_Output направление передачи RS485
+    PA8    ------> GPIO_Output РЅР°РїСЂР°РІР»РµРЅРёРµ РїРµСЂРµРґР°С‡Рё RS485
     */
 
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
@@ -132,7 +132,7 @@ void SetupUSART1(void)
     USART_DMACmd(USART1, USART_DMAReq_Tx, ENABLE);
 
     USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
-    USART_ITConfig(USART1, USART_IT_TC, ENABLE);   // разрешаем прерывание по окончанию передачи (нужно для переключения режима работы rs485)
+    USART_ITConfig(USART1, USART_IT_TC, ENABLE);   // СЂР°Р·СЂРµС€Р°РµРј РїСЂРµСЂС‹РІР°РЅРёРµ РїРѕ РѕРєРѕРЅС‡Р°РЅРёСЋ РїРµСЂРµРґР°С‡Рё (РЅСѓР¶РЅРѕ РґР»СЏ РїРµСЂРµРєР»СЋС‡РµРЅРёСЏ СЂРµР¶РёРјР° СЂР°Р±РѕС‚С‹ rs485)
 
     /*
     DMA_DeInit(DMA1_Channel4);
@@ -153,7 +153,7 @@ void SetupUSART1(void)
 }
 
 /***************************************************************************//**
- * @brief Init USART2 на нем сидит SIM800
+ * @brief Init USART2 РЅР° РЅРµРј СЃРёРґРёС‚ SIM800
  ******************************************************************************/
 void SetupUSART2(void)
 {
@@ -161,14 +161,14 @@ void SetupUSART2(void)
     GPIO_InitTypeDef  GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
 
-    //    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART2
-    //    rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
+    //    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // РѕР±РЅСѓР»СЏРµРј Р±СѓС„РµСЂ РґР»СЏ РїСЂРёРЅРёРјР°РµРјС‹С… РґР°РЅРЅС‹С… UART2
+    //    rec_buf_last_usart1 = -1;                   // РёРЅРґРµРєСЃ РїРѕСЃР»РµРґРЅРµРіРѕ РЅРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅРѕРіРѕ СЃРёРјРІРѕР»Р° РїСЂРёРЅСЏС‚РѕРіРѕ РѕС‚ UART1 СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІ -1
 
 
     /** Configure pins as GPIO
-    PA1    ------> GPIO_Output Сигнал PowerKEY для SIM800
-    PA4    ------> GPIO_Input  Сигнал UART1_RI от  SIM800 (звонок или пришла SMS)
-    PA5    ------> GPIO_Output Сигнал SEL (Выбор SIM-карты)
+    PA1    ------> GPIO_Output РЎРёРіРЅР°Р» PowerKEY РґР»СЏ SIM800
+    PA4    ------> GPIO_Input  РЎРёРіРЅР°Р» UART1_RI РѕС‚  SIM800 (Р·РІРѕРЅРѕРє РёР»Рё РїСЂРёС€Р»Р° SMS)
+    PA5    ------> GPIO_Output РЎРёРіРЅР°Р» SEL (Р’С‹Р±РѕСЂ SIM-РєР°СЂС‚С‹)
     */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_5;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
@@ -176,7 +176,7 @@ void SetupUSART2(void)
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //вход с подтяжкой к питанию
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //РІС…РѕРґ СЃ РїРѕРґС‚СЏР¶РєРѕР№ Рє РїРёС‚Р°РЅРёСЋ
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     /* Configure USART2 Rx (PA3) as input floating                         */
@@ -234,21 +234,21 @@ void SetupUSART2(void)
 
 }
 
-//Функция отправки байта в UART1
+//Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё Р±Р°Р№С‚Р° РІ UART1
 void send_to_uart1(uint8_t data)
 {
     while(!(USART1->SR & USART_SR_TC));
     USART1->DR=data;
 }
 
-//Функция отправки байта в UART2
+//Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё Р±Р°Р№С‚Р° РІ UART2
 void send_to_uart2(uint8_t data)
 {
     while(!(USART2->SR & USART_SR_TC));
     USART2->DR=data;
 }
 
-//Функция отправки строки в UART1
+//Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё СЃС‚СЂРѕРєРё РІ UART1
 void send_str_uart1(char * string)
 {
     uint8_t i=0;
@@ -259,7 +259,7 @@ void send_str_uart1(char * string)
     }
 }
 
-//Функция отправки строки в UART2
+//Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё СЃС‚СЂРѕРєРё РІ UART2
 void send_str_uart2(char * string)
 {
     uint8_t i=0;
@@ -270,7 +270,7 @@ void send_str_uart2(char * string)
     }
 }
 
-// настройка АЦП
+// РЅР°СЃС‚СЂРѕР№РєР° РђР¦Рџ
 void  InitADC(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct;
@@ -303,10 +303,10 @@ void  InitADC(void)
     ADC1->CR2    =  ADC_CR2_EXTSEL;
     ADC1->CR2   |=  ADC_CR2_EXTTRIG;
     ADC1->CR2   |=  ADC_CR2_ADON;
-    ADC_TempSensorVrefintCmd(ENABLE); //TSVREFE_bit (16 - канал встроенный датчик температуры внутри процессора)
+    ADC_TempSensorVrefintCmd(ENABLE); //TSVREFE_bit (16 - РєР°РЅР°Р» РІСЃС‚СЂРѕРµРЅРЅС‹Р№ РґР°С‚С‡РёРє С‚РµРјРїРµСЂР°С‚СѓСЂС‹ РІРЅСѓС‚СЂРё РїСЂРѕС†РµСЃСЃРѕСЂР°)
 }
 
-// Прерывания от UART1
+// РџСЂРµСЂС‹РІР°РЅРёСЏ РѕС‚ UART1
 void USART1_IRQHandler(void)
 {
     uint8_t tmp;
@@ -320,15 +320,15 @@ void USART1_IRQHandler(void)
     }
 
     //Transmission complete interrupt
-    if(USART_GetITStatus(USART1, USART_IT_TC) != RESET) // когда все будет передано
+    if(USART_GetITStatus(USART1, USART_IT_TC) != RESET) // РєРѕРіРґР° РІСЃРµ Р±СѓРґРµС‚ РїРµСЂРµРґР°РЅРѕ
     {
         USART_ClearITPendingBit(USART1, USART_IT_TC);
         //tx_end=1;
-        GPIO_ResetBits(GPIOB,GPIO_Pin_11); // Переключаем RS485 на прием
+        GPIO_ResetBits(GPIOB,GPIO_Pin_11); // РџРµСЂРµРєР»СЋС‡Р°РµРј RS485 РЅР° РїСЂРёРµРј
     }
 }
 
-// Прерывания от UART2
+// РџСЂРµСЂС‹РІР°РЅРёСЏ РѕС‚ UART2
 void USART2_IRQHandler(void)
 {
 
@@ -337,7 +337,7 @@ void USART2_IRQHandler(void)
     {
         USART_ClearITPendingBit(USART2, USART_FLAG_RXNE);
 
-        sim800_response_handler(&state_of_sim800_num1, USART_ReceiveData(USART2)); // вызываем функцию обработки получаемых от SIM800
-        //данных, передаем первым параметром ссылку на состояние конкретного модуля SIM800 (их может быть несколько)
+        sim800_response_handler(&state_of_sim800_num1, USART_ReceiveData(USART2)); // РІС‹Р·С‹РІР°РµРј С„СѓРЅРєС†РёСЋ РѕР±СЂР°Р±РѕС‚РєРё РїРѕР»СѓС‡Р°РµРјС‹С… РѕС‚ SIM800
+        //РґР°РЅРЅС‹С…, РїРµСЂРµРґР°РµРј РїРµСЂРІС‹Рј РїР°СЂР°РјРµС‚СЂРѕРј СЃСЃС‹Р»РєСѓ РЅР° СЃРѕСЃС‚РѕСЏРЅРёРµ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РјРѕРґСѓР»СЏ SIM800 (РёС… РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ)
     }
 }
