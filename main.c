@@ -45,12 +45,12 @@ int main(void)
         for(j=0;j<0x500000;j++);
     }
 
-    //    sim800_ATplusCMGD_request(&state_of_sim800_num1, 1, 4); // удаление всех SMS
-    //
-    //	for(i=0;i<0x1000000;i++);
-    //	{
-    //	    for(j=0;j<0x500000;j++);
-    //	}
+//        sim800_ATplusCMGD_request(&state_of_sim800_num1, 1, 4); // удаление всех SMS
+//
+//    	for(i=0;i<0x1000000;i++);
+//    	{
+//    	    for(j=0;j<0x500000;j++);
+//    	}
 
     //sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79198364844", "TEST!"); // отправка SMS
     //for(i=0;i<0x2000000;i++);

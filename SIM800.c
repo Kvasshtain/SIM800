@@ -86,19 +86,23 @@ uint8_t sim800_AT_request(struct sim800_current_state * current_state)
 // Обработчик ответа команды "AT"
 void sim800_AT_responce_handler(struct sim800_current_state * current_state)
 {
-    if (strstr(current_state->responce,"AT")) // Пришло ЭХО?
+    if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"AT",2)==0) // Пришло ЭХО?
     {
-        //int j; GPIOA->ODR &= ~GPIO_Pin_0; for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+        int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return; // ни чего не делаем (хотя потом можно ставить некий флаг)
     }
-    else if (strstr(current_state->responce,"OK"))
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"OK",2)==0)
     {
-        current_state->result_of_last_execution = OK;
+//        if (strncasecmp(current_state->responce,"OK",2)==0)
+//        {
+//        	int j; GPIOA->ODR &= ~GPIO_Pin_0;// for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+//        }
+    	current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
         current_state->communication_stage = proc_completed;
         return;
     }
-    else if (strstr(current_state->responce,"ERROR"))
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
     {
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
@@ -145,18 +149,18 @@ uint8_t sim800_ATplusCMGF_request(struct sim800_current_state * current_state, u
 // Обработчик ответа команды "AT+CMGF=0/1"
 void sim800_ATplusCMGF_responce_handler(struct sim800_current_state * current_state)
 {
-    if (strstr(current_state->responce,"AT+CMGF=")) // Пришло ЭХО?
+    if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"AT+CMGF=",8)==0) // Пришло ЭХО?
     {
         return; // ни чего не делаем (хотя потом можно ставить некий флаг)
     }
-    else if (strstr(current_state->responce,"OK"))
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"OK",2)==0)
     {
         current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
         current_state->communication_stage = proc_completed;
         return;
     }
-    else if (strstr(current_state->responce,"ERROR"))
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
     {
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
@@ -197,29 +201,30 @@ uint8_t sim800_ATplusCMGS_request(struct sim800_current_state * current_state, u
 // Обработчик ответа команды "AT+CMGS=«ХХХХХХХХХХХ»"
 void sim800_ATplusCMGS_responce_handler(struct sim800_current_state * current_state)
 {
-    if (strstr(current_state->responce,"AT+CMGS=")) // Пришло ЭХО?
+    if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"AT+CMGS=",8)==0) // Пришло ЭХО?
     {
         return; // ни чего не делаем (хотя потом можно ставить некий флаг)
     }
-    else if (strchr(current_state->responce, '>')) // Пришло приглашение ввести текст СМС сообщения
+    else if (strchr(&current_state->rec_buf[current_state->current_read_buf][0], '>')) // Пришло приглашение ввести текст СМС сообщения
     {
         Sim800_WriteSMS(current_state); // само СМС-сообщение лежит внутри current_state и функция Sim800_WriteSMS извлечет его от туда
         return;
     }
-    else if (strstr(current_state->responce,"+CMGS:"))
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"+CMGS:",6)==0)
     {
         //Обработка служебного сообщения об отправки SMS вида:
         //+CMGS: XXX (XXX - некий условный номер отправленного SMS)
         return;
     }
-    else if (strstr(current_state->responce,"OK"))
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"\r\nOK",4)==0)
     {
-        current_state->result_of_last_execution = OK;
+    	//int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+    	current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
         current_state->communication_stage = proc_completed;
         return;
     }
-    else if (strstr(current_state->responce,"ERROR"))
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
     {
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
@@ -269,19 +274,19 @@ uint8_t sim800_ATplusCMGD_request(struct sim800_current_state * current_state, u
 // Обработчик ответа команды "AT+CMGD=
 void sim800_ATplusCMGD_responce_handler(struct sim800_current_state * current_state)
 {
-    if (strstr(current_state->responce,"AT+CMGD=")) // Пришло ЭХО?
+    if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"AT+CMGD=",8)==0) // Пришло ЭХО?
     {
 
         return; // ни чего не делаем (хотя потом можно ставить некий флаг)
     }
-    else if (strstr(current_state->responce,"OK"))
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"OK",2)==0)
     {
         current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
         current_state->communication_stage = proc_completed;
         return;
     }
-    else if (strstr(current_state->responce,"ERROR"))
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
     {
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
@@ -331,17 +336,10 @@ uint8_t sim800_ATplusCMGR_request(struct sim800_current_state * current_state, u
 // Обработчик ответа команды "AT+CMGR= - чтение SMS стадия 1 - прием ЭХО
 void sim800_ATplusCMGR_responce_handler_st1(struct sim800_current_state * current_state)
 {
-    if (strstr(current_state->responce,"AT+CMGR=")) // Пришло ЭХО?
+    if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"AT+CMGR=",8)==0) // Пришло ЭХО?
     {
         current_state->response_handler = sim800_ATplusCMGR_responce_handler_st2;
         return; // ни чего не делаем (хотя потом можно ставить некий флаг)
-    }
-    else if (strstr(current_state->responce,"ERROR"))
-    {
-        current_state->result_of_last_execution = fail;
-        current_state->response_handler = NULL;
-        current_state->communication_stage = proc_completed;
-        return;
     }
     else
     {
@@ -353,7 +351,7 @@ void sim800_ATplusCMGR_responce_handler_st1(struct sim800_current_state * curren
 // Обработчик ответа команды "AT+CMGR= - чтение SMS стадия 2 - прием служебных данных о SMS
 void sim800_ATplusCMGR_responce_handler_st2(struct sim800_current_state * current_state)
 {
-    if (strstr(current_state->responce,"+CMGR:"))
+    if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"+CMGR:",6)==0)
     {
         //GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!
         current_state->response_handler = sim800_ATplusCMGR_responce_handler_st3;
@@ -361,7 +359,14 @@ void sim800_ATplusCMGR_responce_handler_st2(struct sim800_current_state * curren
         // +CMGR: "REC UNREAD","+7XXXXXXXXXX","","16/09/06,14:17:35+12" можно извлечь много полезной информации
         return;
     }
-    else if (strstr(current_state->responce,"ERROR"))
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"OK",2)==0) // если приходит сразу OK без текста сообщения, значит запрашиваемая ячейка пуста
+    {
+        current_state->result_of_last_execution = fail;
+        current_state->response_handler = NULL;
+        current_state->communication_stage = proc_completed;
+        return;
+    }
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0) // Точнее будет +CMS ERROR: 517 (SIM-карта не готова)
     {
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
@@ -383,25 +388,18 @@ void sim800_ATplusCMGR_responce_handler_st3(struct sim800_current_state * curren
     //				GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!
     //			}
     current_state->response_handler = sim800_ATplusCMGR_responce_handler_st4;
-    memcpy(current_state->rec_SMS_data, current_state->responce, strlen(current_state->responce)); // копируем принятое SMS сообщение
+    memcpy(current_state->rec_SMS_data, &current_state->rec_buf[current_state->current_read_buf][0], strlen(&current_state->rec_buf[current_state->current_read_buf][0])); // копируем принятое SMS сообщение
     return;
 }
 
 // Обработчик ответа команды "AT+CMGR= - чтение SMS стадия 4 - обработка сообщения OK
 void sim800_ATplusCMGR_responce_handler_st4(struct sim800_current_state * current_state)
 {
-    if (strstr(current_state->responce,"OK"))
+    if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"\r\nOK",4)==0)
     {
         //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
-        current_state->communication_stage = proc_completed;
-        return;
-    }
-    else if (strstr(current_state->responce,"ERROR"))
-    {
-        current_state->result_of_last_execution = fail;
-        current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
         return;
     }
@@ -423,6 +421,8 @@ uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uar
     // Инициализируем структуру статуса для одного конкретного модуля
     current_state->communication_stage = proc_completed; // в начале работы сбрасываем счетчик стадий в ноль
     current_state->current_pos = 0;
+    current_state->current_read_buf = 0;
+    current_state->current_write_buf = 0;
     memset(current_state->rec_buf,'\0',REC_BUF_SIZE);
     memset(current_state->responce,'\0',REC_BUF_SIZE);
     memset(current_state->current_cmd,'\0',CURRENT_CMD_SIZE);
@@ -525,8 +525,8 @@ void call_handler(struct sim800_current_state * current_state)
 // ни чего не возвращает, а в коде складывает ответ в приемный буфер и в случае приема всей команды вызывает соответсвующий обработчик ответа
 void sim800_response_handler(struct sim800_current_state * current_state, uint8_t data)
 {
-    current_state->rec_buf[current_state->current_pos++] = data;
-    current_state->rec_buf[current_state->current_pos] = '\0'; // заполняем следующую за последним принятым символом позицию нуль-терминатором для корректной работы функций наподобие strstr, memcpy и прочих
+    current_state->rec_buf[current_state->current_write_buf][current_state->current_pos++] = data;
+    current_state->rec_buf[current_state->current_write_buf][current_state->current_pos] = '\0'; // заполняем следующую за последним принятым символом позицию нуль-терминатором для корректной работы функций наподобие strstr, memcpy и прочих
     if (current_state->current_pos > REC_BUF_SIZE - 1)
     {
         // В случае переполнения леквидируем полученный ответ
@@ -535,9 +535,11 @@ void sim800_response_handler(struct sim800_current_state * current_state, uint8_
     }
 
     //надо отследить приглашение к вводу SMS-ки (символ '>')
-    if (strchr(&current_state->rec_buf[current_state->current_pos - 1], '>'))
+    if (strchr(&current_state->rec_buf[current_state->current_write_buf][current_state->current_pos - 1], '>'))
     {
-        memcpy(current_state->responce, current_state->rec_buf, current_state->current_pos + 1); // копируем содержимое приемного буфера в буфер принятого ответа (т.к. содержимое приемного буфера продолжает дополнятся при приеме)
+        //memcpy(current_state->responce, current_state->rec_buf, current_state->current_pos + 1); // копируем содержимое приемного буфера в буфер принятого ответа (т.к. содержимое приемного буфера продолжает дополнятся при приеме)
+    	current_state->current_read_buf = current_state->current_write_buf; // читаем из текущего заполненого буфера
+    	if (++ current_state->current_write_buf == NUM_OF_SUBBUF) {current_state->current_write_buf = 0;}; // переключаемся на следующий буфер для записи принимаемых данных
         current_state->current_pos = 0;
         call_handler(current_state);
         return;
@@ -547,10 +549,12 @@ void sim800_response_handler(struct sim800_current_state * current_state, uint8_
         return;
 
     // надо проверить приемный буфер на наличие признака конца ответного сообщения (два последовательных символа "\r\n")
-    if( strstr(&current_state->rec_buf[current_state->current_pos - 2], "\r\n") )
+    if( strstr(&current_state->rec_buf[current_state->current_write_buf][current_state->current_pos - 2], "\r\n") )
     {
-        memcpy(current_state->responce, current_state->rec_buf, current_state->current_pos + 1); // копируем содержимое приемного буфера в буфер принятого ответа (т.к. содержимое приемного буфера продолжает дополнятся при приеме)
-        current_state->current_pos = 0;
+        //memcpy(current_state->responce, current_state->rec_buf, current_state->current_pos + 1); // копируем содержимое приемного буфера в буфер принятого ответа (т.к. содержимое приемного буфера продолжает дополнятся при приеме)
+    	current_state->current_read_buf = current_state->current_write_buf; // читаем из текущего заполненого буфера
+    	if (++ current_state->current_write_buf == NUM_OF_SUBBUF) {current_state->current_write_buf = 0;}; // переключаемся на следующий буфер для записи принимаемых данных
+    	current_state->current_pos = 0;
         call_handler(current_state);
         return;
     }
@@ -573,25 +577,25 @@ void unexpec_message_parse(struct sim800_current_state *current_state)
     //{
     //    return; // ни чего не делаем (хотя потом можно ставить некий флаг)
     //}
-    if (strstr(current_state->responce,"+CMTI:")) // Пришло СМС сообщение (нпример "+CMTI: "SM",12")
+    if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"+CMTI:")) // Пришло СМС сообщение (нпример "+CMTI: "SM",12")
     {
         // !!!!!!!!! ТУТ НАДО СДЕЛАТЬ ОБРАБОТКУ ПРИНЯТОГО СМС СООБЩЕНИЯ ИЛИ ХОТЯБЫ ИНКРЕМЕНТИРОВАТЬ СЧЕТЧИК ПРИНЯТЫХ СООБЩЕНИЙ
         int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return;
     }
-    else if (strstr(current_state->responce,"Call Ready")) //
+    else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"Call Ready")) //
     {
         current_state->is_Call_Ready = ready;
         int j; GPIOA->ODR &= ~GPIO_Pin_0; for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return;
     }
-    else if (strstr(current_state->responce,"SMS Ready")) //
+    else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"SMS Ready")) //
     {
         current_state->is_SMS_Ready = ready;
         int j; GPIOA->ODR &= ~GPIO_Pin_0; for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return;
     }
-    else if (strstr(current_state->responce,"RING")) // Нам звонят.
+    else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"RING")) // Нам звонят.
     {
         // Пока ни чего не делаем
         return;
