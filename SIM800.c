@@ -116,6 +116,63 @@ void sim800_AT_responce_handler(struct sim800_current_state * current_state)
     }
 }
 
+//Функция разблокировки SIM-карты "AT+CPIN=pin-code"
+// Принимает: 1) указатель на структуру состояния данного модуля SIM800
+//            2) пин-код
+uint8_t sim800_ATplusCPIN_request(struct sim800_current_state * current_state, uint16_t PIN_code)
+{
+    if(current_state->communication_stage != proc_completed) // защита от слишком частых запросов
+    {
+        return busy;                             // Запрос отправить не удалось, т.к. предидущий запрос еще не получен или не обработан
+    }
+    memcpy(current_state->current_cmd, "AT+CPIN=", 9);
+
+    uint8_t string_of_PIN[5]; // PIN код как правило 4 цифры
+    itoa(PIN_code, string_of_PIN, 10);
+
+    strncat(current_state->current_cmd, string_of_PIN, 4);
+    //    if (mode == text_mode)
+    //    {
+    //    	strncat(current_state->current_cmd, "1", 1);
+    //    }
+    //    else
+    //    {
+    //    	strncat(current_state->current_cmd, "0", 1);
+    //	}
+
+    strncat(current_state->current_cmd, "\r", 2);
+    current_state->response_handler = sim800_ATplusCPIN_responce_handler;
+    return sim800_request(current_state);
+}
+
+// Обработчик ответа команды "AT+CPIN=pin-code"
+void sim800_ATplusCPIN_responce_handler(struct sim800_current_state * current_state)
+{
+    if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"AT+CPIN=",8)==0) // Пришло ЭХО?
+    {
+        return; // ни чего не делаем (хотя потом можно ставить некий флаг)
+    }
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"OK",2)==0)
+    {
+        current_state->result_of_last_execution = OK;
+        current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
+        current_state->communication_stage = proc_completed;
+        return;
+    }
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
+    {
+        current_state->result_of_last_execution = fail;
+        current_state->response_handler = NULL;
+        current_state->communication_stage = proc_completed;
+        return;
+    }
+    else
+    {
+        current_state->unex_resp_handler(current_state); // если пришел не ответ на нашу команду, а что-то еще, вызываем обработчик внезапных сообщений
+        return;
+    }
+}
+
 // Функция переключения SIM800 в текстовый режим (команда "AT+CMGF=1 или 0 1-включить, 0-выключить")
 // Принимает: 1) указатель на структуру состояния данного модуля SIM800
 //            2) режим ввода команд text_mode = 1 - включить текстовый режим, code_mode = 0 - выключить текстовый режим
@@ -207,12 +264,14 @@ void sim800_ATplusCMGS_responce_handler(struct sim800_current_state * current_st
     }
     else if (strchr(&current_state->rec_buf[current_state->current_read_buf][0], '>')) // Пришло приглашение ввести текст СМС сообщения
     {
-        Sim800_WriteSMS(current_state); // само СМС-сообщение лежит внутри current_state и функция Sim800_WriteSMS извлечет его от туда
+    	//int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+    	Sim800_WriteSMS(current_state); // само СМС-сообщение лежит внутри current_state и функция Sim800_WriteSMS извлечет его от туда
         return;
     }
-    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"+CMGS:",6)==0)
+    else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"+CMGS:"))
     {
-        //Обработка служебного сообщения об отправки SMS вида:
+    	//int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+    	//Обработка служебного сообщения об отправки SMS вида:
         //+CMGS: XXX (XXX - некий условный номер отправленного SMS)
         return;
     }
@@ -410,16 +469,90 @@ void sim800_ATplusCMGR_responce_handler_st4(struct sim800_current_state * curren
     }
 }
 
+// Функция отправки USSD запроса SIM800 (команда "AT+CUSD=1,"XXXXX", где XXXXX например #102#)
+// Принимает: 1) указатель на структуру состояния данного модуля SIM800
+//            2) Строку USSD запроса
+uint8_t sim800_ATplusCUSD_request(struct sim800_current_state * current_state, uint8_t * USSD_req)
+{
+    if(current_state->communication_stage != proc_completed) // защита от слишком частых запросов
+    {
+        return busy;                             // Запрос отправить не удалось, т.к. предидущий запрос еще не получен или не обработан
+    }
+    memcpy(current_state->current_cmd, "AT+CUSD=1,\"", 12); //=1 — выполнить запрос, ответ вернуть в терминал. Остальные режимы не нужны - 0 — выполнить запрос, полученный ответ проигнорировать, 2 — отменить операцию
+
+    strncat(current_state->current_cmd, USSD_req, 6);
+    //    if (mode == text_mode)
+    //    {
+    //    	strncat(current_state->current_cmd, "1", 1);
+    //    }
+    //    else
+    //    {
+    //    	strncat(current_state->current_cmd, "0", 1);
+    //	}
+    strncat(current_state->current_cmd, "\"", 2); // дописываем завершающие ковычки
+    strncat(current_state->current_cmd, "\r", 2);
+    current_state->response_handler = sim800_ATplusCUSD_responce_handler;
+    return sim800_request(current_state);
+}
+
+// Обработчик ответа команды "AT+CUSD=1,"XXXXX"
+void sim800_ATplusCUSD_responce_handler(struct sim800_current_state * current_state)
+{
+    if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"AT+CUSD=1,\"",11)==0) // Пришло ЭХО?
+    {
+        return; // ни чего не делаем (хотя потом можно ставить некий флаг)
+    }
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"OK",2)==0)
+    {
+        current_state->result_of_last_execution = OK;
+        current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
+        current_state->communication_stage = proc_completed;
+        return;
+    }
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
+    {
+        current_state->result_of_last_execution = fail;
+        current_state->response_handler = NULL;
+        current_state->communication_stage = proc_completed;
+        return;
+    }
+    else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"+CUSD:"))
+    {
+    	memcpy(current_state->last_USSD_data, &current_state->rec_buf[current_state->current_read_buf][0], strlen(&current_state->rec_buf[current_state->current_read_buf][0])); // копируем ответ на USSD запрос
+    	return;
+    }
+    else
+    {
+        current_state->unex_resp_handler(current_state); // если пришел не ответ на нашу команду, а что-то еще, вызываем обработчик внезапных сообщений
+        return;
+    }
+}
+
+
 //**********************************************************************
 //**********************************************************************
+
+void select_sim_card1(void) // Функция выбора SIM-карты 1 (вынес в функции, т.к. модулей SIM800 может быть несколько и у каждого могут быть свои мультиплесоры выбора SIM-карт)
+{
+	select_sim1; // Функция выбора SIM-карты 1
+}
+
+void select_sim_card2(void) // Функция выбора SIM-карты 2
+{
+	select_sim2; // Функция выбора SIM-карты 2
+}
 
 // Функция инициализации одного из модулей SIM800
 // Принимает: 1) указатель на конкретную структуру описывающую состояние конкретного модуля
 //            2) указатель на функцию отправки данных в конкретный UART на котором сидит данный модуль
-uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uart_function)(char *))
+//            3) номер текущей подключенной SIM-карты для случая наличия микросхемы переключения SIM-карт
+//            4) пин код для соответствующей SIM-карты
+uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uart_function)(char *), uint8_t cur_SIM_card, uint16_t pin_code)
 {
     // Инициализируем структуру статуса для одного конкретного модуля
-    current_state->communication_stage = proc_completed; // в начале работы сбрасываем счетчик стадий в ноль
+    current_state->is_pin_req = no;
+    current_state->is_pin_accept = no;
+	current_state->communication_stage = proc_completed; // в начале работы сбрасываем счетчик стадий в ноль
     current_state->current_pos = 0;
     current_state->current_read_buf = 0;
     current_state->current_write_buf = 0;
@@ -436,18 +569,132 @@ uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uar
     memset(current_state->rec_phone_number,'\0',PHONE_NUM_SIZE);
     memset(current_state->send_SMS_data,'\0',SEND_SMS_DATA_SIZE);
     memset(current_state->rec_SMS_data,'\0',REC_SMS_DATA_SIZE);
-    current_state->PWR_KEY_handler = sim800_1_PWRKEY_on;    // указатель на функцию включения конкретного модуля SIM800
-    current_state->PWR_KEY_handler();                       // включаем модуль
+    memset(current_state->last_USSD_data,'\0',USSD_DATA_SIZE);
     current_state->is_Call_Ready = not_ready;
     current_state->is_SMS_Ready = not_ready;
+    current_state->power_voltage_status = NORMAL_VOLT;
+    current_state->SIM1_select_handler = select_sim_card1;
+    current_state->SIM2_select_handler = select_sim_card2;
 
-    // пробуем отправить тестовую команду, заодно настроив скорость передачи по UART
-    sim800_AT_request(&state_of_sim800_num1);
+    current_state->PWR_KEY_handler = sim800_1_PWRKEY_on;    // указатель на функцию включения конкретного модуля SIM800
+    current_state->PWR_KEY_handler();                       // включаем модуль
+
+    // выбираем активную SIM-карту
+    if (cur_SIM_card == 1)
+    {
+        current_state->current_SIM_card = 1;
+        current_state->SIM1_select_handler();
+    }
+    else if (cur_SIM_card == 2)
+    {
+    	current_state->current_SIM_card = 2;
+    	current_state->SIM2_select_handler();
+    }
+    else
+    {
+	    return fail; // подключенно может быть не более 2-х SIM карт
+	}
+
+    uint32_t count = 0; // счетчик на случай проблем с обменом с SIM800
+
+    //----------------------
+    sim800_AT_request(&state_of_sim800_num1); // пробуем отправить тестовую команду, заодно настроив скорость передачи по UART
+    while (current_state->communication_stage != proc_completed) // ждем пока не ответит OK
+    {
+        count ++;
+        if (count == REQ_TIMEOUT)
+        {
+        	return ATfail;
+        }
+    };
+    count = 0;
+    if (current_state->result_of_last_execution == fail)
+    {
+    	return ATfail;
+    };
+    //----------------------
+
+    //----------------------
+    while (current_state->is_pin_req == no) // ждем запроса ввести PIN-код
+    {
+    	count ++;
+        if (count == LONG_REQ_TIMEOUT)
+        {
+        	return PIN_CODE_REQ_EXPECfail;
+        }
+        if (current_state->is_pin_accept == yes) // эта проверка на случай если PIN-код вводить не надо
+        {
+            break;
+        }
+    }
+    count = 0;
+    if (current_state->is_pin_accept == no)
+    {
+    	sim800_ATplusCPIN_request(&state_of_sim800_num1, pin_code);
+    }
+    while (current_state->communication_stage != proc_completed)
+    {
+        count ++;
+        if (count == REQ_TIMEOUT)
+        {
+        	return ATplusCPINfail;
+        }
+    }
+    count = 0;
+    if (current_state->result_of_last_execution == fail)
+    {
+    	return ATplusCPINfail;
+    };
+    //----------------------
+
+    //----------------------
+    while ((current_state->is_Call_Ready != ready) || (current_state->is_SMS_Ready != ready)) // ждем выдачи сообщений Call Ready и SMS Ready
+    {
+//    	count ++;
+//        if (count == LONG_REQ_TIMEOUT)
+//        {
+//        	return CALL_SMS_EXPECfail;
+//        }
+    }
+    count = 0;
+    //----------------------
+
+    //----------------------
+    sim800_ATplusCMGF_request(&state_of_sim800_num1, text_mode); // переключение в текстовый режим ввода SMS
+    while (current_state->communication_stage != proc_completed) // ждем пока не ответит OK
+    {
+        count ++;
+        if (count == REQ_TIMEOUT)
+        {
+        	return ATplusCMGFfail;
+        }
+    };
+    count = 0;
+    if (current_state->result_of_last_execution == fail)
+    {
+    	return ATplusCMGFfail;
+    };
+    //----------------------
+
+    //----------------------
+    sim800_ATplusCMGD_request(&state_of_sim800_num1, 1, 4); // удаление всех SMS
+    while (current_state->communication_stage != proc_completed) // ждем пока не ответит OK
+    {
+        count ++;
+        if (count == REQ_TIMEOUT)
+        {
+        	return fail;
+        }
+    };
+    count = 0;
+    if (current_state->result_of_last_execution == fail)
+    {
+    	return fail;
+    };
+    //----------------------
 
 
-
-
-
+    return OK;
 
 
 
@@ -580,7 +827,7 @@ void unexpec_message_parse(struct sim800_current_state *current_state)
     if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"+CMTI:")) // Пришло СМС сообщение (нпример "+CMTI: "SM",12")
     {
         // !!!!!!!!! ТУТ НАДО СДЕЛАТЬ ОБРАБОТКУ ПРИНЯТОГО СМС СООБЩЕНИЯ ИЛИ ХОТЯБЫ ИНКРЕМЕНТИРОВАТЬ СЧЕТЧИК ПРИНЯТЫХ СООБЩЕНИЙ
-        int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+        //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return;
     }
     else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"Call Ready")) //
@@ -600,6 +847,20 @@ void unexpec_message_parse(struct sim800_current_state *current_state)
         // Пока ни чего не делаем
         return;
     }
+    else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"+CPIN: SIM PIN"))// - SIM-карта требует ввести пин-код
+    {
+    	current_state->is_pin_req = yes;
+    }
+    else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"+CPIN: READY"))// - SIM-карта приняла пин-код или он вообще не требуется
+    {
+    	current_state->is_pin_req = no;
+    	current_state->is_pin_accept = yes;
+    }
+    else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"UNDER-VOLTAGE WARNNING"))
+    {
+		// При понижении питающего напряжения ниже 3,3 Вольт модуль начинает слать соответствующие предупреждения. Сообщения будут отсылаться каждые 5 секунд.
+    	current_state->power_voltage_status = LOW_VOLTAGE;
+	}
     else
     {
         return; // а это все остальные внезапные сообщения
