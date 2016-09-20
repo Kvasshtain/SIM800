@@ -11,8 +11,9 @@
 
 #include "misc.h"
 
-
+// Для пробросов колбеков
 #include "SIM800.h"
+#include "REG74HC165.h"
 
 //uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
 //int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
@@ -306,6 +307,12 @@ void  InitADC(void)
     ADC_TempSensorVrefintCmd(ENABLE); //TSVREFE_bit (16 - канал встроенный датчик температуры внутри процессора)
 }
 
+// Настройка сиситемного таймера
+void Init_SysTick(TimerTick)
+{
+	SysTick_Config(TimerTick); // Вызываем стандартную функцию настройки системного таймера из core_cm3.h (в ней разрешается прерывание системного таймера)
+}
+
 // Прерывания от UART1
 void USART1_IRQHandler(void)
 {
@@ -340,4 +347,10 @@ void USART2_IRQHandler(void)
         sim800_response_handler(&state_of_sim800_num1, USART_ReceiveData(USART2)); // вызываем функцию обработки получаемых от SIM800
         //данных, передаем первым параметром ссылку на состояние конкретного модуля SIM800 (их может быть несколько)
     }
+}
+
+// Прерывание системного таймера
+void SysTick_Handler(void)
+{
+	load_data74HC165(&reg74hc165_current_state_num1); // вызываем функцию чтения входов
 }
