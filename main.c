@@ -3,6 +3,7 @@
 #include "main.h"
 #include "phisic.h"
 #include "SIM800.h"
+#include "flash.h"
 
 #include "stm32f10x.h"
 #include "stm32f10x_gpio.h"
@@ -31,10 +32,23 @@ void Sys_Init(void) // функция первоначальной инициа�
 int main(void)
 {
 	volatile int i,j;
-	Sys_Init(); // первоначальная инициализация системы
-    // инициализация первого SIM800
+	uint8_t temp[10];
 
-    sim800_init(&state_of_sim800_num1, send_str_uart2, 2, 6239); // Первый SIM800 сидит на UART2
+	Sys_Init(); // первоначальная инициализация системы
+
+	FLASH_Write_Default_String(); // запись в последнии страницы флеш памяти дефолтных строк текстовых сообщений SMS
+
+	FLASH_Write_String(start_DATA_Page_61, 0, "Hello", strlen("Hello")); // запись во флеш тестового SMS сообщения
+	FLASH_Read_String(start_DATA_Page_61, 0, temp, 10);
+	//GPIOA->ODR &= ~GPIO_Pin_0;
+	if (strstr(temp,"Hello")) // проверка функции чтения из флеш FLASH_Read_String
+	{
+		GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+	}
+
+
+// инициализация первого SIM800
+//    sim800_init(&state_of_sim800_num1, send_str_uart2, 2, 6239); // Первый SIM800 сидит на UART2
 //	for(i=0;i<0x1000000;i++);
 //	{
 //	    for(j=0;j<0x500000;j++);
@@ -53,21 +67,21 @@ int main(void)
 //	{
 //	    for(j=0;j<0x500000;j++);
 //	}
-    sim800_ATplusCGATTequal1_request(&state_of_sim800_num1); // регистрируемся в GPRS сети
-	for(i=0;i<0x1000000;i++);
-	{
-	    for(j=0;j<0x500000;j++);
-	}
-    sim800_ATplusCIPRXGETequal1_request(&state_of_sim800_num1); // переключаемся в режим ручного приема данных GPRS
-	for(i=0;i<0x1000000;i++);
-	{
-	    for(j=0;j<0x500000;j++);
-	}
-	sim800_ATplusCIPMUX_request(&state_of_sim800_num1, single_connection); // переключаемся в режим одиночного подключения по GPRS
-	for(i=0;i<0x1000000;i++);
-	{
-	    for(j=0;j<0x500000;j++);
-	}
+//    sim800_ATplusCGATTequal1_request(&state_of_sim800_num1); // регистрируемся в GPRS сети
+//	for(i=0;i<0x1000000;i++);
+//	{
+//	    for(j=0;j<0x500000;j++);
+//	}
+//    sim800_ATplusCIPRXGETequal1_request(&state_of_sim800_num1); // переключаемся в режим ручного приема данных GPRS
+//	for(i=0;i<0x1000000;i++);
+//	{
+//	    for(j=0;j<0x500000;j++);
+//	}
+//	sim800_ATplusCIPMUX_request(&state_of_sim800_num1, single_connection); // переключаемся в режим одиночного подключения по GPRS
+//	for(i=0;i<0x1000000;i++);
+//	{
+//	    for(j=0;j<0x500000;j++);
+//	}
 //	if (state_of_sim800_num1.mobile_operator_SIM2 == MTS)
 //	{
 //		GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!;
@@ -76,17 +90,17 @@ int main(void)
 //	{
 //		GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!;
 //	}
-    sim800_ATplusCSTT_request(&state_of_sim800_num1);
-	for(i=0;i<0x1000000;i++);
-	{
-	    for(j=0;j<0x500000;j++);
-	}
-    sim800_ATplusCIICR_request(&state_of_sim800_num1);
-	for(i=0;i<0x1000000;i++);
-	{
-	    for(j=0;j<0x500000;j++);
-	}
-    sim800_ATplusCIFSR_request(&state_of_sim800_num1);
+//    sim800_ATplusCSTT_request(&state_of_sim800_num1);
+//	for(i=0;i<0x1000000;i++);
+//	{
+//	    for(j=0;j<0x500000;j++);
+//	}
+//    sim800_ATplusCIICR_request(&state_of_sim800_num1);
+//	for(i=0;i<0x1000000;i++);
+//	{
+//	    for(j=0;j<0x500000;j++);
+//	}
+//    sim800_ATplusCIFSR_request(&state_of_sim800_num1);
 
 //	for(i=0;i<0x1000000;i++);
 //	{
