@@ -32,19 +32,31 @@ void Sys_Init(void) // функция первоначальной инициа�
 int main(void)
 {
 	volatile int i,j;
-	uint8_t temp[10];
+	uint8_t temp[32];
 
 	Sys_Init(); // первоначальная инициализация системы
 
 	FLASH_Write_Default_String(); // запись в последнии страницы флеш памяти дефолтных строк текстовых сообщений SMS
 
-	FLASH_Write_String(start_DATA_Page_61, 0, "Hello", strlen("Hello")); // запись во флеш тестового SMS сообщения
-	FLASH_Read_String(start_DATA_Page_61, 0, temp, 10);
-	//GPIOA->ODR &= ~GPIO_Pin_0;
-	if (strstr(temp,"Hello")) // проверка функции чтения из флеш FLASH_Read_String
+	FLASH_Write_Phone_Num(0, "89649955199", strlen("89649955199")+1); // запись телефонного номера в телефонную книгу
+	FLASH_Write_Phone_Num(1, "89198364844", strlen("89198364844")+1);
+	FLASH_Write_Phone_Num(2, "89658894144", strlen("89658894144")+1);
+
+	FLASH_Read_Phone_Num(1, temp, 32); // чтение телефонного номера из телефонной книги
+
+	if (strstr(temp,"89198364844")) // проверка функции чтения из флеш FLASH_Read_String
 	{
 		GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
 	}
+
+//	FLASH_Write_Msg_String(start_DATA_Page_61, 1, "Hello", strlen("Hello")+1); // запись во флеш тестового SMS сообщения
+//
+//	FLASH_Read_Msg_String(start_DATA_Page_61, 1, temp, 32);
+//	//GPIOA->ODR &= ~GPIO_Pin_0;
+//	if (strstr(temp,"Hello")) // проверка функции чтения из флеш FLASH_Read_String
+//	{
+//		GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+//	}
 
 
 // инициализация первого SIM800

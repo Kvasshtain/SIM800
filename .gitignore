@@ -57,6 +57,7 @@
 *.coproj
 *.cogui
 *.comarker
+*.comemgui
 
 # output directories
 GSM6/
