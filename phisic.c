@@ -338,7 +338,6 @@ void USART1_IRQHandler(void)
 // Прерывания от UART2
 void USART2_IRQHandler(void)
 {
-
     //if (USART_GetITStatus(USART1, USART_FLAG_RXNE) == SET)
     if((USART2->SR & USART_SR_RXNE)!=0)
     {

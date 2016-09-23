@@ -10,19 +10,69 @@ struct reg74hc165_current_state reg74hc165_current_state_num1; // регистровых ка
 // Функция вызываемая из обработчика прерывания таймера производящая побитное чтение данных с выхода 74hc165
 void load_data74HC165(struct reg74hc165_current_state * current_state)
 {
-	if (CP_PIN_STATE == 0) // если на линии клока 0, то ставим 1 и ждем следующего раза
+	//PL_PIN_UP;
+	if (current_state->stage == pl_low)
 	{
+		PL_PIN_DOWN;
 		CP_PIN_UP;
+		current_state->stage = cp_low;
 		return;
 	}
-	CP_PIN_DOWN;
-	current_state->input_data <<= 1; // сдвигаем данные влево
-	QH_PIN_STATE ? (current_state->input_data |= 1) : (current_state->input_data |= 0);
-	current_state->current_bit++;
-	if (current_state->current_bit == NUM_BIT)
+
+	if (current_state->stage == cp_low)
 	{
-		current_state->current_bit = 0;
-		current_state->result = current_state->input_data;
+		PL_PIN_UP;
+		CP_PIN_UP;
+		current_state->stage = cp_high;
+		return;
 	}
-    return;
+
+	if (current_state->stage == cp_high)
+	{
+		PL_PIN_UP;
+		CP_PIN_DOWN;
+		current_state->stage = qh_ready;
+		return;
+	}
+
+	if (current_state->stage == qh_ready)
+	{
+		PL_PIN_UP;
+		CP_PIN_DOWN;
+
+		if (QH_PIN_STATE) // Вычитываем текущий бит
+		{
+			current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_phis_state = 1;
+		}
+		else
+		{
+			current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_phis_state = 0;
+		}
+
+		// устанавливае логическое состояние в зависимости от физического и что считать активным
+		if (current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.alarm_state)
+		{
+			current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_log_state =
+					current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_phis_state;
+		}
+		else
+		{
+			current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_log_state =
+					~current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_phis_state;
+		}
+
+		current_state->current_bit++;
+
+		if (current_state->current_bit == (NUM_BIT))
+		{
+			current_state->stage = pl_low;
+			current_state->current_bit = 0;
+			return;
+		}
+
+		current_state->stage = cp_low;
+		return;
+	}
+
+	return;
 }
