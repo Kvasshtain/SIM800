@@ -110,7 +110,7 @@ void sim800_AT_responce_handler(struct sim800_current_state * current_state)
 {
     if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"AT",2)==0) // Пришло ЭХО?
     {
-        int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+        //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return; // ни чего не делаем (хотя потом можно ставить некий флаг)
     }
     else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"OK",2)==0)
@@ -419,6 +419,7 @@ void sim800_ATplusCMGD_responce_handler(struct sim800_current_state * current_st
         current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
         current_state->communication_stage = proc_completed;
+        current_state->num_of_sms = 0;
         return;
     }
     else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
@@ -1060,7 +1061,7 @@ uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uar
     uint32_t count = 0; // счетчик на случай проблем с обменом с SIM800
 
     //----------------------
-    sim800_AT_request(&state_of_sim800_num1); // пробуем отправить тестовую команду, заодно настроив скорость передачи по UART
+    sim800_AT_request(current_state); // пробуем отправить тестовую команду, заодно настроив скорость передачи по UART
     while (current_state->communication_stage != proc_completed) // ждем пока не ответит OK
     {
         count ++;
@@ -1092,7 +1093,7 @@ uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uar
     count = 0;
     if (current_state->is_pin_accept == no)
     {
-    	sim800_ATplusCPIN_request(&state_of_sim800_num1, pin_code);
+    	sim800_ATplusCPIN_request(current_state, pin_code);
     }
     while (current_state->communication_stage != proc_completed)
     {
@@ -1122,7 +1123,7 @@ uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uar
     //----------------------
 
     //----------------------
-    sim800_ATplusCMGF_request(&state_of_sim800_num1, text_mode); // переключение в текстовый режим ввода SMS
+    sim800_ATplusCMGF_request(current_state, text_mode); // переключение в текстовый режим ввода SMS
     while (current_state->communication_stage != proc_completed) // ждем пока не ответит OK
     {
         count ++;
@@ -1139,7 +1140,7 @@ uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uar
     //----------------------
 
     //----------------------
-    sim800_ATplusCMGD_request(&state_of_sim800_num1, 1, 4); // удаление всех SMS
+    sim800_ATplusCMGD_request(current_state, 1, 4); // удаление всех SMS
     while (current_state->communication_stage != proc_completed) // ждем пока не ответит OK
     {
         count ++;
@@ -1156,24 +1157,35 @@ uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uar
     //----------------------
 
     //----------------------
-    sim800_ATplusCREGquestion_request(&state_of_sim800_num1); // запрос регистрации в сети
-    while (current_state->communication_stage != proc_completed) // ждем пока не ответит OK
+    uint8_t i;
+    volatile j;
+    for (i = 0; i < 5; i++) // пробуем проверить регистрацию в сети 5-ть раз с небольшими интервалами
     {
-        count ++;
-        if (count == REQ_TIMEOUT)
+        sim800_ATplusCREGquestion_request(current_state); // запрос регистрации в сети
+        while (current_state->communication_stage != proc_completed) // ждем пока не ответит OK
         {
-        	return ATplusCREGfail;
-        }
-    };
-    count = 0;
-    if (current_state->current_registration_state != 1)
+            count ++;
+            if (count == LONG_REQ_TIMEOUT)
+            {
+            	return ATplusCREGfail;
+            }
+        };
+        count = 0;
+        if ((current_state->current_registration_state == 1) || (current_state->current_registration_state == 5))
+        {
+        	break;
+        };
+        for(j=0;j<0x300000;j++); // задержка перед отправкой перезапроса
+    }
+
+    if ((current_state->current_registration_state != 1) && (current_state->current_registration_state != 5))
     {
     	return ATplusCREGfail;
     };
     //----------------------
 
     //----------------------
-    sim800_ATplusCSPNquestion_request(&state_of_sim800_num1); // запрос оператора SIM-карты
+    sim800_ATplusCSPNquestion_request(current_state); // запрос оператора SIM-карты
     while (current_state->communication_stage != proc_completed) // ждем пока не ответит OK
     {
         count ++;
@@ -1271,19 +1283,26 @@ void unexpec_message_parse(struct sim800_current_state *current_state)
 {
     if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"+CMTI:")) // Пришло СМС сообщение (нпример "+CMTI: "SM",12")
     {
-        // !!!!!!!!! ТУТ НАДО СДЕЛАТЬ ОБРАБОТКУ ПРИНЯТОГО СМС СООБЩЕНИЯ ИЛИ ХОТЯБЫ ИНКРЕМЕНТИРОВАТЬ СЧЕТЧИК ПРИНЯТЫХ СООБЩЕНИЙ
+    	if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][7],"SM",2)==0)
+   	    {
+    		current_state->num_of_sms = atoi(&current_state->rec_buf[current_state->current_read_buf][12]);
+   	    }
         //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return;
     }
     else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"Call Ready")) //
     {
         current_state->is_Call_Ready = ready;
+    	current_state->is_pin_req = no; // "+CPIN: READY" может вообще не быть. Сразу приходит "Call Ready" или "SMS Ready", и PIN-код вводить тоже не надо
+    	current_state->is_pin_accept = yes;
         return;
     }
     else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"SMS Ready")) //
     {
         current_state->is_SMS_Ready = ready;
-        int j; GPIOA->ODR &= ~GPIO_Pin_0; for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+        current_state->is_Call_Ready = ready;
+    	current_state->is_pin_req = no; // "+CPIN: READY" может вообще не быть. Сразу приходит "Call Ready" или "SMS Ready", и PIN-код вводить тоже не надо
+        //int j; GPIOA->ODR &= ~GPIO_Pin_0; for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return;
     }
     else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"RING")) // Нам звонят.
@@ -1304,6 +1323,11 @@ void unexpec_message_parse(struct sim800_current_state *current_state)
     {
     	current_state->is_pin_req = no;
     	current_state->is_pin_accept = yes;
+    }
+    else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"+CPIN: NOT READY"))// - SIM-карта приняла пин-код или он вообще не требуется
+    {
+    	current_state->is_pin_req = no;
+    	current_state->is_pin_accept = no;
     }
     else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"+CPIN: NOT INSERTED"))// - SIM-карта не вставлена
     {

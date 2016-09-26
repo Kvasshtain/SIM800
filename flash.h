@@ -50,8 +50,10 @@ uint8_t FLASH_Read_Msg_String(uint32_t page, uint8_t string_cell, uint8_t * data
 
 uint8_t FLASH_Read_Phone_Num(uint8_t string_cell, uint8_t * data_string, uint32_t size); // функция чтения строки телефонного номера целевого абонента из четвертой с конца страницы флеш
 
+uint8_t FLASH_Read_Config_Byte(uint16_t byte_shift, uint8_t * config_byte); // функция чтения байта конфигурации цифровых входов из пятой с конца страницы флеш
+
 // ВНИМАНИЕ!!! НЕВЕРНОЕ ИСПОЛЬЗОВАНИЕ ЭТОЙ ФУНКЦИИ МОЖЕТ ПОВРЕДИТЬ ПРОШИВКУ!!!
-uint8_t FLASH_Write_Byte(uint32_t page, uint16_t byte_shift, uint8_t * read_byte); // функция записи одного байта в произвольную страницу флеш памяти по произвольному смещению
+uint8_t FLASH_Write_Byte(uint32_t page, uint16_t byte_shift, uint8_t read_byte); // функция записи одного байта в произвольную страницу флеш памяти по произвольному смещению
 
 // ВНИМАНИЕ!!! НЕВЕРНОЕ ИСПОЛЬЗОВАНИЕ ЭТОЙ ФУНКЦИИ МОЖЕТ ПОВРЕДИТЬ ПРОШИВКУ!!!
 uint8_t FLASH_Write_String(uint32_t page, uint32_t shift, uint8_t * data_string, uint32_t size); // функция записи произвольной строки сообщения во флеш
@@ -60,6 +62,10 @@ uint8_t FLASH_Write_Msg_String(uint32_t page, uint8_t string_cell, uint8_t * dat
 
 uint8_t FLASH_Write_Phone_Num(uint8_t string_cell, uint8_t * data_string, uint32_t size); // функция записи строки телефонного номера целевого абонента в четвертую с конца страницу флеш
 
+uint8_t FLASH_Write_Config_Byte(uint16_t byte_shift, uint8_t config_byte); // функция записи байта конфигурации цифровых входов в пятую с конца страницы флеш
+
 void FLASH_Write_Default_String(void); // функция первоначальной установки текстовых сообщений в строках-ячейках
+
+void FLASH_Write_Default_Config(void); // функция проверки заполнена ли 5-ая по счету с конца страница флеш где хранится конфигурация и если она пуста, запись дефолтной конфигурации
 
 #endif /* __FLASH_H */

@@ -11,9 +11,9 @@
 
 #include "misc.h"
 
-// Для пробросов колбеков
 #include "SIM800.h"
 #include "REG74HC165.h"
+#include "GSMcommunication.h"
 
 //uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
 //int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
@@ -352,4 +352,5 @@ void USART2_IRQHandler(void)
 void SysTick_Handler(void)
 {
 	load_data74HC165(&reg74hc165_current_state_num1); // вызываем функцию чтения входов
+	GSM
 }

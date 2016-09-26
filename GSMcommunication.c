@@ -3,14 +3,15 @@
 #include "GSMcommunication.h"
 #include "SIM800.h"
 
-//// Функция отправки SMS
-//uint8_t sim800_sendSMS(uint8_t* text_buf, uint8_t length)
-//{
-//
-//}
-//
-//// Функция обработки принятых SMS
-//uint8_t sim800_sendSMS(uint8_t* text_buf, uint8_t length)
-//{
-//
-//}
+// Функция отправки SMS
+// Функция берет очередное сообщение из очереди сообщений и пытается его отправить используя соответсвующую низкоуровневую функцию
+uint8_t sim800_sendSMS(uint8_t* text_buf, uint8_t length)
+{
+
+}
+
+// Функция обработки принятых SMS
+uint8_t sim800_recSMS(uint8_t* text_buf, uint8_t length)
+{
+
+}
