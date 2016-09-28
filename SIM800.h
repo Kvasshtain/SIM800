@@ -54,7 +54,7 @@
 #define REC_SMS_DATA_SIZE 256    // размер буфера под принимаемое СМС сообщение
 #define USSD_DATA_SIZE 256       // размер буфера под данные последнего USSD запроса
 #define PHONE_NUM_SIZE 16        // размер буфера под телефонный номер сделал с запасом (достаточно 11 символов, но выравнил на степень двойки)
-#define NUM_OF_SUBBUF 2          // число приемных под буферов (для двойной или даже тройной буферизации принимаемых данных)
+#define NUM_OF_SUBBUF 3          // число приемных под буферов (для двойной или даже тройной буферизации принимаемых данных)
 #define REQ_TIMEOUT      0x100000// таймаут запроса - это когда запрос отправлен но получение ответа слишком затянулось (защита от зависания при работе в блокирующимся режиме)
 #define LONG_REQ_TIMEOUT 0x500000// то-же что и предидущее но для случая когда ответ действительно может затянуться (для случая очень долгого ожидания необходимо использовать таймер или вложенные циклы)
 #define LL_REQ_TIMEOUT  0x1500000// то-же что и предидущее но для случая когда ответ действительно может затянуться (для случая очень долгого ожидания необходимо использовать таймер или вложенные циклы)
@@ -134,6 +134,8 @@ struct sim800_current_state{
     enum operators mobile_operator_SIM2;            // идентификатор мобильного оператора SIM-карты 2
     enum operators current_mobile_operator;         // в зависимости от того, какая SIM-карта активна здесь будет лежать либо mobile_operator_SIM1, либо mobile_operator_SIM2
     uint8_t IP_address_string[64];                  // ip-адрес IPv4 например 123.675.874.234 - максимум 16 символов, в IPv6 (на всякий случай) - максимум 40 символов, округлил до 64
+    uint8_t Status;                                 // Статус: модуль готов к работе (ready), или не готов к работе (not_ready)
+    uint8_t num_of_fail;                            // Число неудачно выполненых запросов (закончевшихся ERROR)
 };
 
 extern struct sim800_current_state state_of_sim800_num1; // модулей может быть несколько
@@ -167,7 +169,12 @@ uint8_t sim800_ATplusCSPNquestion_request(struct sim800_current_state * current_
 void sim800_ATplusCSPNquestion_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CSPN?"
 
 uint8_t sim800_ATplusCMGS_request(struct sim800_current_state * current_state, uint8_t * phone_number, uint8_t * SMS_data); // Функция отправки СМС SIM800 (команда "AT+CMGS=«ХХХХХХХХХХХ»")
-void sim800_ATplusCMGS_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGS=«ХХХХХХХХХХХ»"
+// Пришлось обработку ответа разбить на стадии, т.к. ответ большой и его парсинг может не успеть до прихода финального OK
+void sim800_ATplusCMGS_responce_handler_st1(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGS= - передачи SMS стадия 1 - прием ЭХО
+void sim800_ATplusCMGS_responce_handler_st2(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGS= - передачи SMS стадия 2 - прием приглашения ввести текст SMS и ввод текста
+void sim800_ATplusCMGS_responce_handler_st3(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGS= - передачи SMS стадия 3 - передачи SMS стадия 3 - прием эхо текста SMS или служебной информации
+void sim800_ATplusCMGS_responce_handler_st4(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGS= - передачи SMS стадия 4 - прием служебной информации
+void sim800_ATplusCMGS_responce_handler_st5(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGS= - передачи SMS стадия 4 - обработка сообщения OK
 
 uint8_t sim800_ATplusCMGD_request(struct sim800_current_state * current_state, uint8_t num_of_message, uint8_t mode_of_delete); // // Функция удаления СМС SIM800 (команда "AT+CMGD=1,0" 1, — номер сообщения 0, — режим удаления)
 void sim800_ATplusCMGD_responce_handler(struct sim800_current_state * current_state); // Обработчик ответа команды "AT+CMGD="

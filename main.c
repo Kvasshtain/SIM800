@@ -5,6 +5,7 @@
 #include "SIM800.h"
 #include "flash.h"
 #include "REG74HC165.h"
+#include "GSMcommunication.h"
 
 #include "stm32f10x.h"
 #include "stm32f10x_gpio.h"
@@ -12,22 +13,15 @@
 #include "stm32f10x_usart.h"
 #include <stdio.h>
 
-int i;
-
 //**********************************************************************************************************
 void Sys_Init(void) // функция первоначальной инициализации системы
 {
     SetupClock();
     SetupGPIO();
-
-   // select_sim1; // Функция выбора SIM-карты 1 //ОТЛАДКА!!!
-
     SetupUSART1();
     SetupUSART2();
     InitADC();
-    Init_SysTick(TIMER_TICK);
     FLASH_Unlock();      // Разблокируем запись во FLASH программ
-
 }
 
 int main(void)
@@ -37,7 +31,41 @@ int main(void)
 
 	Sys_Init(); // первоначальная инициализация системы
 
-//	FLASH_Write_Default_String(); // запись в последнии страницы флеш памяти дефолтных строк текстовых сообщений SMS если это еще не сделано
+	GSM_Com_Init(&state_of_sim800_num1); // инициализация коммуникационного интерфейса GSM
+
+	FLASH_Write_Default_String(); // запись в последнии страницы флеш памяти дефолтных строк текстовых сообщений SMS если это еще не сделано
+
+	FLASH_Write_Phone_Num(0, "89649955199", strlen("89649955199")); // запись телефонного номера в телефонную книгу
+	FLASH_Write_Phone_Num(1, "89061536606", strlen("89061536606")); // запись телефонного номера в телефонную книгу
+	FLASH_Write_Phone_Num(2, "89878145441", strlen("89878145441")); // запись телефонного номера в телефонную книгу
+
+	// инициализация первого SIM800
+	sim800_init(&state_of_sim800_num1, send_str_uart2, 2, 6239); // Первый SIM800 сидит на UART2
+	// запуск системного таймера надо производить только после настройки SIM800
+
+//    if ((state_of_sim800_num1.communication_stage == proc_completed))
+//    {
+//    	GPIOA->ODR &= ~GPIO_Pin_0;
+//    }
+
+//	while (state_of_sim800_num1.communication_stage != proc_completed) // ждем пока не ответит OK
+//	{
+//	}
+//	sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "TEST1"); // отправка SMS
+//	while (state_of_sim800_num1.communication_stage != proc_completed) // ждем пока не ответит OK
+//	{
+//	}
+//	sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "TEST2"); // отправка SMS
+//	while (state_of_sim800_num1.communication_stage != proc_completed) // ждем пока не ответит OK
+//	{
+//	}
+//	sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "TEST3"); // отправка SMS
+
+	Init_SysTick(TIMER_TICK); // разрешаем работу системного таймера
+
+
+
+//!!!!!!!!!!!!!!!!!! Разкоменть
 //	FLASH_Write_Default_Config(); // запись в пятую с конца страницу дефолтной конфигурации цифровых входов
 
 //	uint8_t test_byte = 3;
@@ -51,9 +79,10 @@ int main(void)
 //		GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
 //	}
 
-//	FLASH_Write_Phone_Num(0, "89649955199", strlen("89649955199")+1); // запись телефонного номера в телефонную книгу
-//	FLASH_Write_Phone_Num(1, "89198364844", strlen("89198364844")+1);
-//	FLASH_Write_Phone_Num(2, "89658894144", strlen("89658894144")+1);
+//	FLASH_Write_String(start_DATA_Page_60, 0, "888888", strlen("888888"));
+//	FLASH_Write_Phone_Num(0, "89649955199", strlen("89649955199")); // запись телефонного номера в телефонную книгу
+//	FLASH_Write_Phone_Num(0, "89198364844", strlen("89198364844"));
+//	FLASH_Write_Phone_Num(2, "89658894144", strlen("89658894144"));
 //
 //	FLASH_Read_Phone_Num(1, temp, 32); // чтение телефонного номера из телефонной книги
 //
@@ -72,12 +101,19 @@ int main(void)
 //	}
 
 
-// инициализация первого SIM800
-    sim800_init(&state_of_sim800_num1, send_str_uart2, 2, 6239); // Первый SIM800 сидит на UART2
-	for(i=0;i<0x1000000;i++);
-	{
-	    for(j=0;j<0x500000;j++);
-	}
+
+
+//	while (state_of_sim800_num1.communication_stage != proc_completed) // ждем пока не ответит OK
+//	{
+//
+//	}
+//  sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "TEST TEST TEST"); // отправка SMS
+//	while (state_of_sim800_num1.communication_stage != proc_completed) // ждем пока не ответит OK
+//	{
+//
+//	}
+//	sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "TEST TEST TEST"); // отправка SMS
+
 
 //	sim800_AT_request(&state_of_sim800_num1); // пробуем отправить тестовую команду, заодно настроив скорость передачи по UART
 //
@@ -155,11 +191,15 @@ int main(void)
 //    	}
 //
 
-    sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "TEST!"); // отправка SMS
-    for(i=0;i<0x2000000;i++);
-   	{
-        for(j=0;j<0x500000;j++);
-   	}
+//    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//    sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "TEST!"); // отправка SMS
+//    for(i=0;i<0x2000000;i++);
+//   	{
+//        for(j=0;j<0x500000;j++);
+//   	}
+
+
+
 //
 //    sim800_ATplusCMGR_request(&state_of_sim800_num1, 1, 0); // чтение SMS под номером 1
 //

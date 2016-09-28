@@ -129,6 +129,7 @@ void sim800_AT_responce_handler(struct sim800_current_state * current_state)
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -186,6 +187,7 @@ void sim800_ATplusCPIN_responce_handler(struct sim800_current_state * current_st
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -244,6 +246,7 @@ void sim800_ATplusCMGF_responce_handler(struct sim800_current_state * current_st
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -286,7 +289,7 @@ void sim800_ATplusCSPNquestion_responce_handler(struct sim800_current_state * cu
 
         return;
     }
-    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"\r\nOK",4)==0)
+    else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"OK"))
     {
         current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
@@ -298,6 +301,7 @@ void sim800_ATplusCSPNquestion_responce_handler(struct sim800_current_state * cu
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -323,7 +327,7 @@ uint8_t sim800_ATplusCMGS_request(struct sim800_current_state * current_state, u
     strncat(current_state->current_cmd, phone_number, 14); // 14 - выбрано с запасом на всякий пожарный (обычный телефонный номер максимум 11 символв)
     strncat(current_state->current_cmd, "\"", 2); // добавим ковычки в конец и начало телефонного номера как того требует стандарт AT-команды
     strncat(current_state->current_cmd, "\r", 2);
-    current_state->response_handler = sim800_ATplusCMGS_responce_handler;
+    current_state->response_handler = sim800_ATplusCMGS_responce_handler_st1;
 
     memcpy(current_state->send_SMS_data, SMS_data, SEND_SMS_DATA_SIZE);
     strncat(current_state->send_SMS_data, 0x1A, 1); // В конце СМС должно завершаться символом Ctrl+Z (признак отправки)
@@ -331,30 +335,122 @@ uint8_t sim800_ATplusCMGS_request(struct sim800_current_state * current_state, u
     return sim800_request(current_state);
 }
 
-// Обработчик ответа команды "AT+CMGS=«ХХХХХХХХХХХ»"
-void sim800_ATplusCMGS_responce_handler(struct sim800_current_state * current_state)
+// Пришлось обработку ответа разбить на стадии, т.к. ответ при длинном отправляемом SMS большой и его парсинг не успевал до прихода финального OK
+// Обработчик ответа команды "AT+CMGS= - передачи SMS стадия 1 - прием ЭХО
+void sim800_ATplusCMGS_responce_handler_st1(struct sim800_current_state * current_state)
 {
     if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"AT+CMGS=",8)==0) // Пришло ЭХО?
     {
+        current_state->response_handler = sim800_ATplusCMGS_responce_handler_st2;
         return; // ни чего не делаем (хотя потом можно ставить некий флаг)
     }
-    else if (strchr(&current_state->rec_buf[current_state->current_read_buf][0], '>')) // Пришло приглашение ввести текст СМС сообщения
+    else
     {
-    	//int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
-    	Sim800_WriteSMS(current_state); // само СМС-сообщение лежит внутри current_state и функция Sim800_WriteSMS извлечет его от туда
+        current_state->unex_resp_handler(current_state);
         return;
     }
-    else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"+CMGS:"))
+}
+
+// Обработчик ответа команды "AT+CMGS= - передачи SMS стадия 2 - прием приглашения ввести текст SMS и ввод текста
+void sim800_ATplusCMGS_responce_handler_st2(struct sim800_current_state * current_state)
+{
+	if (strchr(&current_state->rec_buf[current_state->current_read_buf][0], '>')) // Пришло приглашение ввести текст СМС сообщения
     {
-    	//int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
-    	//Обработка служебного сообщения об отправки SMS вида:
-        //+CMGS: XXX (XXX - некий условный номер отправленного SMS)
+   	    //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+		current_state->response_handler = sim800_ATplusCMGS_responce_handler_st3;
+		Sim800_WriteSMS(current_state); // само СМС-сообщение лежит внутри current_state и функция Sim800_WriteSMS извлечет его от туда
         return;
     }
-    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"\r\nOK",4)==0)
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
     {
-    	//int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
-    	current_state->result_of_last_execution = OK;
+        current_state->result_of_last_execution = fail;
+        current_state->response_handler = NULL;
+        current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
+        return;
+    }
+    else
+    {
+        current_state->unex_resp_handler(current_state);
+        return;
+    }
+    return;
+}
+
+// Обработчик ответа команды "AT+CMGS= - передачи SMS стадия 3 - прием эхо текста SMS или служебной информации
+void sim800_ATplusCMGS_responce_handler_st3(struct sim800_current_state * current_state)
+{
+	if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],current_state->send_SMS_data))
+    {
+		//int j; GPIOA->ODR &= ~GPIO_Pin_0;
+		//Обработка служебного сообщения об отправки SMS вида:
+		//+CMGS: XXX (,где XXX - некий условный номер отправленного SMS)
+		// если требуется, то этот номер можно сохранить здесь
+		current_state->response_handler = sim800_ATplusCMGS_responce_handler_st4; // просто переходим на следующую стадию
+		//int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+        return;
+    }
+	else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"+CMGS:")) // на всякий случай проверим и служебную информацию
+		                                                                                   // что бы сразу перескочить на 5-ую стадию
+    {
+		//int j; GPIOA->ODR &= ~GPIO_Pin_0;
+		//Обработка служебного сообщения об отправки SMS вида:
+		//+CMGS: XXX (,где XXX - некий условный номер отправленного SMS)
+		// если требуется, то этот номер можно сохранить здесь
+		current_state->response_handler = sim800_ATplusCMGS_responce_handler_st5; // просто переходим на следующую стадию
+		//int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+        return;
+    }
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
+    {
+        current_state->result_of_last_execution = fail;
+        current_state->response_handler = NULL;
+        current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
+        return;
+    }
+    else
+    {
+        current_state->unex_resp_handler(current_state);
+        return;
+    }
+}
+
+// Обработчик ответа команды "AT+CMGS= - передачи SMS стадия 3 - прием служебной информации
+void sim800_ATplusCMGS_responce_handler_st4(struct sim800_current_state * current_state)
+{
+	if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"+CMGS:"))
+    {
+		//int j; GPIOA->ODR &= ~GPIO_Pin_0;
+		//Обработка служебного сообщения об отправки SMS вида:
+		//+CMGS: XXX (,где XXX - некий условный номер отправленного SMS)
+		// если требуется, то этот номер можно сохранить здесь
+		current_state->response_handler = sim800_ATplusCMGS_responce_handler_st5; // просто переходим на следующую стадию
+		//int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+        return;
+    }
+    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
+    {
+        current_state->result_of_last_execution = fail;
+        current_state->response_handler = NULL;
+        current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
+        return;
+    }
+    else
+    {
+        current_state->unex_resp_handler(current_state);
+        return;
+    }
+}
+
+// Обработчик ответа команды "AT+CMGS= - передачи SMS стадия 4 - обработка сообщения OK
+void sim800_ATplusCMGS_responce_handler_st5(struct sim800_current_state * current_state)
+{
+    if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"OK"))
+    {
+    	int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+        current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
         current_state->communication_stage = proc_completed;
         return;
@@ -364,11 +460,13 @@ void sim800_ATplusCMGS_responce_handler(struct sim800_current_state * current_st
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
     {
-        current_state->unex_resp_handler(current_state);
+    	//int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+    	current_state->unex_resp_handler(current_state);
         return;
     }
 }
@@ -427,6 +525,7 @@ void sim800_ATplusCMGD_responce_handler(struct sim800_current_state * current_st
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -463,7 +562,7 @@ void sim800_ATplusCREGquestion_responce_handler(struct sim800_current_state * cu
         current_state->current_registration_state = atoi(&current_state->rec_buf[current_state->current_read_buf][9]); //+CREG: 0,1 финальная 1 (9-ый символ) - это и есть текущая регистрация
         return;
     }
-    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"\r\nOK",4)==0)
+    else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"OK"))
     {
         current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
@@ -475,6 +574,7 @@ void sim800_ATplusCREGquestion_responce_handler(struct sim800_current_state * cu
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -554,6 +654,7 @@ void sim800_ATplusCMGR_responce_handler_st2(struct sim800_current_state * curren
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -578,7 +679,7 @@ void sim800_ATplusCMGR_responce_handler_st3(struct sim800_current_state * curren
 // Обработчик ответа команды "AT+CMGR= - чтение SMS стадия 4 - обработка сообщения OK
 void sim800_ATplusCMGR_responce_handler_st4(struct sim800_current_state * current_state)
 {
-    if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"\r\nOK",4)==0)
+    if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"OK"))
     {
         //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         current_state->result_of_last_execution = OK;
@@ -638,6 +739,7 @@ void sim800_ATplusCUSD_responce_handler(struct sim800_current_state * current_st
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"+CUSD:"))
@@ -685,6 +787,7 @@ void sim800_ATplusCGATTequal1_responce_handler(struct sim800_current_state * cur
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -727,6 +830,7 @@ void sim800_ATplusCIPRXGETequal1_responce_handler(struct sim800_current_state * 
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -775,6 +879,7 @@ void sim800_ATplusCIPMUX_responce_handler(struct sim800_current_state * current_
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -853,6 +958,7 @@ void sim800_ATplusCSTT_responce_handler(struct sim800_current_state * current_st
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -895,6 +1001,7 @@ void sim800_ATplusCIICR_responce_handler(struct sim800_current_state * current_s
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -930,6 +1037,7 @@ void sim800_ATplusCIFSR_responce_handler(struct sim800_current_state * current_s
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else // модуль просто выдает свой IP-адрес без сообщения "OK"
@@ -982,6 +1090,7 @@ void sim800_ATplusCDNSCFG_responce_handler(struct sim800_current_state * current
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
+        current_state->num_of_fail ++;
         return;
     }
     else
@@ -1012,6 +1121,7 @@ void select_sim_card2(void) // Функция выбора SIM-карты 2
 uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uart_function)(char *), uint8_t cur_SIM_card, uint16_t pin_code)
 {
     // Инициализируем структуру статуса для одного конкретного модуля
+	current_state->Status = not_ready;
     current_state->is_pin_req = no;
     current_state->is_pin_accept = no;
 	current_state->communication_stage = proc_completed; // в начале работы сбрасываем счетчик стадий в ноль
@@ -1209,7 +1319,7 @@ uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uar
     }
 
     //----------------------
-
+    current_state->Status = ready;
     return OK;
 }
 
@@ -1253,7 +1363,7 @@ void sim800_response_handler(struct sim800_current_state * current_state, uint8_
         return;
     }
 
-    //надо отследить приглашение к вводу SMS-ки (символ '>')
+    //надо отследить приглашение к вводу SMS-ки или строки передаваемой по GPRS (символ '>')
     if (strchr(&current_state->rec_buf[current_state->current_write_buf][current_state->current_pos - 1], '>'))
     {
     	current_state->current_read_buf = current_state->current_write_buf; // читаем из текущего заполненого буфера

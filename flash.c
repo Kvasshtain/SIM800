@@ -97,21 +97,32 @@ uint8_t FLASH_Read_String(uint32_t page, uint32_t shift, uint8_t * data_string, 
 //            2) номер строки-€чейки (их в одной странице 8-мь штук)
 //            3) указатель на строку дл€ копировани€
 //            4) размер копируемой строки
-uint8_t FLASH_Read_Msg_String(uint32_t page, uint8_t string_cell, uint8_t * data_string, uint32_t size)
+uint8_t FLASH_Read_Msg_String(uint8_t string_cell, uint8_t * data_string, uint32_t size)
 {
+	uint32_t page;
+
 	if (data_string == NULL)
 	{
 		return 1;
 	}
 
-	if ((page != start_DATA_Page_61) && (page != start_DATA_Page_62) && (page != start_DATA_Page_63))
+	if (string_cell > 24)
 	{
-		return 2;
+		return 3;
+	}
+
+	page = start_DATA_Page_61;
+
+	if (string_cell > 16)
+	{
+	    string_cell -= 16;
+	    page = start_DATA_Page_63;
 	}
 
 	if (string_cell > 8)
 	{
-		return 3;
+	    string_cell -= 8;
+	    page = start_DATA_Page_62;
 	}
 
 	return FLASH_Read_String(page, MAX_SIZE_STRING_8 * string_cell, data_string, size);
@@ -255,10 +266,19 @@ uint8_t FLASH_Write_String(uint32_t page, uint32_t shift, uint8_t * data_string,
     FLASH_ErasePage(page); // стираем страницу флеш пам€ти
 
     // записываем измененый временный буфер обратно в страницу флеш
-	for (i = 0; i < PAGE_SIZE_32; i++) // запись идет сразу по 4-е байта
+	for (i = 0; i < PAGE_SIZE_32; i++) // запись идет сразу по 4-е байта    PAGE_SIZE_32
     {
 		FLASH_ProgramWord(page + 4*i,temp_buf[i]);
     }
+
+
+//    for (k = 0; k < MAX_SIZE_STRING_32; k++)
+//    {
+//        FLASH_ProgramWord(DATA_Pages[i] + MAX_SIZE_STRING_8*j + 4*k , write_str[k]);
+//    }
+
+
+
 	return 0;
 }
 //***************************************************************************************************************************************
@@ -270,21 +290,32 @@ uint8_t FLASH_Write_String(uint32_t page, uint32_t shift, uint8_t * data_string,
 //            2) номер строки-€чейки (их в одной странице 8-мь штук)
 //            3) указатель на записываемую строку
 //            4) размер записываемой строки
-uint8_t FLASH_Write_Msg_String(uint32_t page, uint8_t string_cell, uint8_t * data_string, uint32_t size)
+uint8_t FLASH_Write_Msg_String(uint8_t string_cell, uint8_t * data_string, uint32_t size)
 {
+	uint32_t page;
+
 	if (data_string == NULL)
 	{
 		return 1;
 	}
 
-	if ((page != start_DATA_Page_61) && (page != start_DATA_Page_62) && (page != start_DATA_Page_63)) // если указана неверна€ страница флеш
-	{
-		return 2;
-	}
-
-	if (string_cell >= 8)
+	if (string_cell > 24)
 	{
 		return 3;
+	}
+
+	page = start_DATA_Page_61;
+
+	if (string_cell > 16)
+	{
+	    string_cell -= 16;
+	    page = start_DATA_Page_63;
+	}
+
+	if (string_cell > 8)
+	{
+	    string_cell -= 8;
+	    page = start_DATA_Page_62;
 	}
 
 	if (size > MAX_SIZE_STRING_8) // если размер строки окажетс€ больше размера €чейки-строки обрезаем ее до размера €чейки-строки
@@ -357,7 +388,7 @@ void FLASH_Write_Default_String(void)
 	uint8_t k = 0; // счетчик записываемых 32-х битных слов
 	uint8_t m = 0; // счетчик записаных строк
 	uint32_t page;
-	uint32_t write_str[MAX_SIZE_STRING_8];
+	uint32_t write_str[MAX_SIZE_STRING_32];
 	uint8_t string_of_num[4]; // строка содержаща€ номер входного сигнала (маловеро€тно, что число превысит 3-и пор€дка)
 	//uint32_t temp_buf[PAGE_SIZE_32]; // временный буффер в котором хран€тс€ считанна€ страница из флеш пам€ти
 	uint8_t string_prefix_size = strlen(std_string_prefix);
@@ -407,7 +438,7 @@ void FLASH_Write_Default_Config(void)
 		return;
 	}
 
-    for (i=0; i<NUM_BIT; i++) // перебераем столько €чеек страницы конфигурации цифровых входов во флеш сколько имеем входов
+    for (i=0; i<NUM_OF_INPUT; i++) // перебераем столько €чеек страницы конфигурации цифровых входов во флеш сколько имеем входов
     {
     	FLASH_Write_Config_Byte(i, 0); // пока все по нул€м
     }

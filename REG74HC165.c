@@ -42,28 +42,28 @@ void load_data74HC165(struct reg74hc165_current_state * current_state)
 
 		if (QH_PIN_STATE) // Вычитываем текущий бит
 		{
-			current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_phis_state = 1;
+			current_state->arr_res[NUM_OF_INPUT - 1 - current_state->current_bit].status.cur_phis_state = 1;
 		}
 		else
 		{
-			current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_phis_state = 0;
+			current_state->arr_res[NUM_OF_INPUT - 1 - current_state->current_bit].status.cur_phis_state = 0;
 		}
 
 		// устанавливае логическое состояние в зависимости от физического и что считать активным
-		if (current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.alarm_state)
+		if (current_state->arr_res[NUM_OF_INPUT - 1 - current_state->current_bit].status.alarm_state)
 		{
-			current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_log_state =
-					current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_phis_state;
+			current_state->arr_res[NUM_OF_INPUT - 1 - current_state->current_bit].status.cur_log_state =
+					current_state->arr_res[NUM_OF_INPUT - 1 - current_state->current_bit].status.cur_phis_state;
 		}
 		else
 		{
-			current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_log_state =
-					~current_state->arr_res[NUM_BIT - 1 - current_state->current_bit].status.cur_phis_state;
+			current_state->arr_res[NUM_OF_INPUT - 1 - current_state->current_bit].status.cur_log_state =
+					~current_state->arr_res[NUM_OF_INPUT - 1 - current_state->current_bit].status.cur_phis_state;
 		}
 
 		current_state->current_bit++;
 
-		if (current_state->current_bit == (NUM_BIT))
+		if (current_state->current_bit == (NUM_OF_INPUT))
 		{
 			current_state->stage = pl_low;
 			current_state->current_bit = 0;
