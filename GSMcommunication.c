@@ -1,4 +1,4 @@
-// Функции для передачи и приема данных по интерфейсу GSM
+п»ї// Р¤СѓРЅРєС†РёРё РґР»СЏ РїРµСЂРµРґР°С‡Рё Рё РїСЂРёРµРјР° РґР°РЅРЅС‹С… РїРѕ РёРЅС‚РµСЂС„РµР№СЃСѓ GSM
 #include <stdio.h>
 #include "stm32f10x_gpio.h"
 
@@ -7,155 +7,155 @@
 #include "SIM800.h"
 #include "GSMcommunication.h"
 
-// Структура описывает текущее состояние комуникационного GSM интерфейса
+// РЎС‚СЂСѓРєС‚СѓСЂР° РѕРїРёСЃС‹РІР°РµС‚ С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РєРѕРјСѓРЅРёРєР°С†РёРѕРЅРЅРѕРіРѕ GSM РёРЅС‚РµСЂС„РµР№СЃР°
 struct GSM_communication_state{
-    uint8_t Status_of_mailing;                 // статус рассылки: занят (busy)- рассылка сообщения идет,
-                                               //                  свободен (free) - рассылка сообщения закончена,
-    uint8_t status_mes_send;                   // флаг статуса отправки SMS может принимать SMS_send_stop = 0 или SMS_send_start = 1
-    uint8_t current_abonent;                   // тикущий номер абонета
-    uint8_t max_num_of_abonent;                // максимальное число абонентов для рассылки
-    uint8_t SMS_text[MAX_SIZE_STRING_8];       // текущий текс SMS для отправки
-    uint8_t phone_num[MAX_SIZE_STR_PHONE_8];   // номер телефона текущего абонента
+    uint8_t Status_of_mailing;                 // СЃС‚Р°С‚СѓСЃ СЂР°СЃСЃС‹Р»РєРё: Р·Р°РЅСЏС‚ (busy)- СЂР°СЃСЃС‹Р»РєР° СЃРѕРѕР±С‰РµРЅРёСЏ РёРґРµС‚,
+    //                  СЃРІРѕР±РѕРґРµРЅ (free) - СЂР°СЃСЃС‹Р»РєР° СЃРѕРѕР±С‰РµРЅРёСЏ Р·Р°РєРѕРЅС‡РµРЅР°,
+    uint8_t status_mes_send;                   // С„Р»Р°Рі СЃС‚Р°С‚СѓСЃР° РѕС‚РїСЂР°РІРєРё SMS РјРѕР¶РµС‚ РїСЂРёРЅРёРјР°С‚СЊ SMS_send_stop = 0 РёР»Рё SMS_send_start = 1
+    uint8_t current_abonent;                   // С‚РёРєСѓС‰РёР№ РЅРѕРјРµСЂ Р°Р±РѕРЅРµС‚Р°
+    uint8_t max_num_of_abonent;                // РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ С‡РёСЃР»Рѕ Р°Р±РѕРЅРµРЅС‚РѕРІ РґР»СЏ СЂР°СЃСЃС‹Р»РєРё
+    uint8_t SMS_text[MAX_SIZE_STRING_8];       // С‚РµРєСѓС‰РёР№ С‚РµРєСЃ SMS РґР»СЏ РѕС‚РїСЂР°РІРєРё
+    uint8_t phone_num[MAX_SIZE_STR_PHONE_8];   // РЅРѕРјРµСЂ С‚РµР»РµС„РѕРЅР° С‚РµРєСѓС‰РµРіРѕ Р°Р±РѕРЅРµРЅС‚Р°
 };
 
-struct GSM_communication_state GSM_com_state; // структура хранящая текущее состояние коммуникационного GSM итерфеса
+struct GSM_communication_state GSM_com_state; // СЃС‚СЂСѓРєС‚СѓСЂР° С…СЂР°РЅСЏС‰Р°СЏ С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РєРѕРјРјСѓРЅРёРєР°С†РёРѕРЅРЅРѕРіРѕ GSM РёС‚РµСЂС„РµСЃР°
 
-// функция инициализации коммуникационного интерфейса
+// С„СѓРЅРєС†РёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РєРѕРјРјСѓРЅРёРєР°С†РёРѕРЅРЅРѕРіРѕ РёРЅС‚РµСЂС„РµР№СЃР°
 void GSM_Com_Init(struct sim800_current_state * GSMmod)
 {
-	GSM_com_state.SMS_text[0] = '\0';
-	uint8_t status_mes_send = SMS_send_stop;
-	GSM_com_state.phone_num[0] = '\0';
-	GSM_com_state.Status_of_mailing = free;
-	GSM_com_state.current_abonent = 0;
-	GSM_com_state.max_num_of_abonent = NUM_OF_ABONENTS;
+    GSM_com_state.SMS_text[0] = '\0';
+    uint8_t status_mes_send = SMS_send_stop;
+    GSM_com_state.phone_num[0] = '\0';
+    GSM_com_state.Status_of_mailing = free;
+    GSM_com_state.current_abonent = 0;
+    GSM_com_state.max_num_of_abonent = NUM_OF_ABONENTS;
 }
 
-// Функция отправки SMS
-// Функция пытается его отправить используя соответсвующую низкоуровневую функцию
+// Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё SMS
+// Р¤СѓРЅРєС†РёСЏ РїС‹С‚Р°РµС‚СЃСЏ РµРіРѕ РѕС‚РїСЂР°РІРёС‚СЊ РёСЃРїРѕР»СЊР·СѓСЏ СЃРѕРѕС‚РІРµС‚СЃРІСѓСЋС‰СѓСЋ РЅРёР·РєРѕСѓСЂРѕРІРЅРµРІСѓСЋ С„СѓРЅРєС†РёСЋ
 void sendSMS(void)
 {
     do
     {
-    	FLASH_Read_Phone_Num(GSM_com_state.current_abonent, GSM_com_state.phone_num, MAX_SIZE_STR_PHONE_8);
-    	GSM_com_state.current_abonent++;
-    	if (GSM_com_state.current_abonent == GSM_com_state.max_num_of_abonent) // если пробежались по всем ячейкам флеш памяти и телефонных номеров больше нет
-    	{
-       		GSM_com_state.current_abonent = 0;
-       		GSM_com_state.Status_of_mailing = free;
-       		return;
-    	}
+        FLASH_Read_Phone_Num(GSM_com_state.current_abonent, GSM_com_state.phone_num, MAX_SIZE_STR_PHONE_8);
+        GSM_com_state.current_abonent++;
+        if (GSM_com_state.current_abonent == GSM_com_state.max_num_of_abonent) // РµСЃР»Рё РїСЂРѕР±РµР¶Р°Р»РёСЃСЊ РїРѕ РІСЃРµРј СЏС‡РµР№РєР°Рј С„Р»РµС€ РїР°РјСЏС‚Рё Рё С‚РµР»РµС„РѕРЅРЅС‹С… РЅРѕРјРµСЂРѕРІ Р±РѕР»СЊС€Рµ РЅРµС‚
+        {
+            GSM_com_state.current_abonent = 0;
+            GSM_com_state.Status_of_mailing = free;
+            return;
+        }
     }
     while (GSM_com_state.phone_num[0] == 0xFF);
     GSM_com_state.current_abonent--;
 
-    if ((state_of_sim800_num1.communication_stage == proc_completed)     // если GSM-модуль не занят обработкой предыдущего запроса и
-   			&& (GSM_com_state.status_mes_send == SMS_send_stop))         // мы еще не начали отсылать SMS
-   	{
-     	GSM_com_state.status_mes_send = SMS_send_start; // отправили запрос на отправку SMS
-   		sim800_ATplusCMGS_request(&state_of_sim800_num1, GSM_com_state.phone_num, GSM_com_state.SMS_text);
-
-   		return;
-   	}
-
-    if (state_of_sim800_num1.communication_stage == proc_completed) // если GSM-модуль не занят обработкой предыдущего запроса
+    if ((state_of_sim800_num1.communication_stage == proc_completed)     // РµСЃР»Рё GSM-РјРѕРґСѓР»СЊ РЅРµ Р·Р°РЅСЏС‚ РѕР±СЂР°Р±РѕС‚РєРѕР№ РїСЂРµРґС‹РґСѓС‰РµРіРѕ Р·Р°РїСЂРѕСЃР° Рё
+            && (GSM_com_state.status_mes_send == SMS_send_stop))         // РјС‹ РµС‰Рµ РЅРµ РЅР°С‡Р°Р»Рё РѕС‚СЃС‹Р»Р°С‚СЊ SMS
     {
-    	GPIOA->ODR ^= GPIO_Pin_0;
-   		GSM_com_state.status_mes_send = SMS_send_stop;
-   		if (state_of_sim800_num1.result_of_last_execution == OK)
-   		{
-   			GSM_com_state.current_abonent++; // следующий абонент
-   		}
-    	return;
+        GSM_com_state.status_mes_send = SMS_send_start; // РѕС‚РїСЂР°РІРёР»Рё Р·Р°РїСЂРѕСЃ РЅР° РѕС‚РїСЂР°РІРєСѓ SMS
+        sim800_ATplusCMGS_request(&state_of_sim800_num1, GSM_com_state.phone_num, GSM_com_state.SMS_text);
+
+        return;
     }
 
-   	return;
+    if (state_of_sim800_num1.communication_stage == proc_completed) // РµСЃР»Рё GSM-РјРѕРґСѓР»СЊ РЅРµ Р·Р°РЅСЏС‚ РѕР±СЂР°Р±РѕС‚РєРѕР№ РїСЂРµРґС‹РґСѓС‰РµРіРѕ Р·Р°РїСЂРѕСЃР°
+    {
+        GPIOA->ODR ^= GPIO_Pin_0;
+        GSM_com_state.status_mes_send = SMS_send_stop;
+        if (state_of_sim800_num1.result_of_last_execution == OK)
+        {
+            GSM_com_state.current_abonent++; // СЃР»РµРґСѓСЋС‰РёР№ Р°Р±РѕРЅРµРЅС‚
+        }
+        return;
+    }
+
+    return;
 }
 
-// Функция обработки принятых SMS
+// Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё РїСЂРёРЅСЏС‚С‹С… SMS
 uint8_t recSMS(void)
 {
-    static uint8_t recSMSstatus; // флаг ожидания прихода запрошенного SMS-сообщения
-    if ((recSMSstatus == free) && (state_of_sim800_num1.communication_stage == proc_completed)) // если SMS еще не читалось и модуль завершил обработку всех предидущих запросов
+    static uint8_t recSMSstatus; // С„Р»Р°Рі РѕР¶РёРґР°РЅРёСЏ РїСЂРёС…РѕРґР° Р·Р°РїСЂРѕС€РµРЅРЅРѕРіРѕ SMS-СЃРѕРѕР±С‰РµРЅРёСЏ
+    if ((recSMSstatus == free) && (state_of_sim800_num1.communication_stage == proc_completed)) // РµСЃР»Рё SMS РµС‰Рµ РЅРµ С‡РёС‚Р°Р»РѕСЃСЊ Рё РјРѕРґСѓР»СЊ Р·Р°РІРµСЂС€РёР» РѕР±СЂР°Р±РѕС‚РєСѓ РІСЃРµС… РїСЂРµРґРёРґСѓС‰РёС… Р·Р°РїСЂРѕСЃРѕРІ
     {
-    	recSMSstatus = busy;
-    	sim800_ATplusCMGR_request(&state_of_sim800_num1, 1, 0); // чтение SMS под номером 1 !!!!!!!!!!!!!!!!!!!!!
+        recSMSstatus = busy;
+        sim800_ATplusCMGR_request(&state_of_sim800_num1, 1, 0); // С‡С‚РµРЅРёРµ SMS РїРѕРґ РЅРѕРјРµСЂРѕРј 1 !!!!!!!!!!!!!!!!!!!!!
     }
     else if (state_of_sim800_num1.communication_stage == proc_completed)
     {
 
-    	// Обработа принятого SMS
-    	//!!!!!!!!!!GSM_com_state.sim800module->rec_SMS_data;
-    	if (stristr(state_of_sim800_num1.rec_SMS_data,"BLA-BLA-BLA")) // Пришло СМС сообщение с текстом BLA-BLA-BLA
-   	    {
-   	    	// !!!!! вызываем обработчик
-   	    }
-   	    else if (stristr(state_of_sim800_num1.rec_SMS_data,"helo-helo-helo")) //
-   	    {
-   	    	// !!!!! вызываем обработчик
-   	    }
-   	    else
-   	    {
-   	        return; // на все остальные SMS-сообщения не обращаем внимание
-   	    }
-   	    recSMSstatus = free;
+        // РћР±СЂР°Р±РѕС‚Р° РїСЂРёРЅСЏС‚РѕРіРѕ SMS
+        //!!!!!!!!!!GSM_com_state.sim800module->rec_SMS_data;
+        if (stristr(state_of_sim800_num1.rec_SMS_data,"BLA-BLA-BLA")) // РџСЂРёС€Р»Рѕ РЎРњРЎ СЃРѕРѕР±С‰РµРЅРёРµ СЃ С‚РµРєСЃС‚РѕРј BLA-BLA-BLA
+        {
+            // !!!!! РІС‹Р·С‹РІР°РµРј РѕР±СЂР°Р±РѕС‚С‡РёРє
+        }
+        else if (stristr(state_of_sim800_num1.rec_SMS_data,"helo-helo-helo")) //
+        {
+            // !!!!! РІС‹Р·С‹РІР°РµРј РѕР±СЂР°Р±РѕС‚С‡РёРє
+        }
+        else
+        {
+            return; // РЅР° РІСЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ SMS-СЃРѕРѕР±С‰РµРЅРёСЏ РЅРµ РѕР±СЂР°С‰Р°РµРј РІРЅРёРјР°РЅРёРµ
+        }
+        recSMSstatus = free;
     }
 }
 
-// главная коммуникационная функция GSM
-// может вызываться из обработчика прерывания (например таймера)
-// или из одного из потоков операционной системы (например FreeRTOS, но не проверял пока)
+// РіР»Р°РІРЅР°СЏ РєРѕРјРјСѓРЅРёРєР°С†РёРѕРЅРЅР°СЏ С„СѓРЅРєС†РёСЏ GSM
+// РјРѕР¶РµС‚ РІС‹Р·С‹РІР°С‚СЊСЃСЏ РёР· РѕР±СЂР°Р±РѕС‚С‡РёРєР° РїСЂРµСЂС‹РІР°РЅРёСЏ (РЅР°РїСЂРёРјРµСЂ С‚Р°Р№РјРµСЂР°)
+// РёР»Рё РёР· РѕРґРЅРѕРіРѕ РёР· РїРѕС‚РѕРєРѕРІ РѕРїРµСЂР°С†РёРѕРЅРЅРѕР№ СЃРёСЃС‚РµРјС‹ (РЅР°РїСЂРёРјРµСЂ FreeRTOS, РЅРѕ РЅРµ РїСЂРѕРІРµСЂСЏР» РїРѕРєР°)
 void GSM_Communication_routine(void)
 {
-	// проверяем дискретные входы
-	static uint8_t cur_dig_input;
-    static GSM_counter; // счетчик задержки работы коммуникационной функции GSM
+    // РїСЂРѕРІРµСЂСЏРµРј РґРёСЃРєСЂРµС‚РЅС‹Рµ РІС…РѕРґС‹
+    static uint8_t cur_dig_input;
+    static GSM_counter; // СЃС‡РµС‚С‡РёРє Р·Р°РґРµСЂР¶РєРё СЂР°Р±РѕС‚С‹ РєРѕРјРјСѓРЅРёРєР°С†РёРѕРЅРЅРѕР№ С„СѓРЅРєС†РёРё GSM
 
-    GSM_counter++; // вызыв алгоритма обработчика происходит изредка для подавления дребезга контактов и
-    if (GSM_counter < 300) // еще не пришла очередь ни чего не делаем
+    GSM_counter++; // РІС‹Р·С‹РІ Р°Р»РіРѕСЂРёС‚РјР° РѕР±СЂР°Р±РѕС‚С‡РёРєР° РїСЂРѕРёСЃС…РѕРґРёС‚ РёР·СЂРµРґРєР° РґР»СЏ РїРѕРґР°РІР»РµРЅРёСЏ РґСЂРµР±РµР·РіР° РєРѕРЅС‚Р°РєС‚РѕРІ Рё
+    if (GSM_counter < 300) // РµС‰Рµ РЅРµ РїСЂРёС€Р»Р° РѕС‡РµСЂРµРґСЊ РЅРё С‡РµРіРѕ РЅРµ РґРµР»Р°РµРј
     {
-    	return;
+        return;
     }
-    GSM_counter = 0; // сбрасываем счетчик задержки вызова
+    GSM_counter = 0; // СЃР±СЂР°СЃС‹РІР°РµРј СЃС‡РµС‚С‡РёРє Р·Р°РґРµСЂР¶РєРё РІС‹Р·РѕРІР°
 
-    if (state_of_sim800_num1.Status == not_ready) // если обслуживающий нас модуль не готов ни чего не делаем
-	{
-		return;
-	}
-
-//	if ((GSM_com_state.Status_of_ == free) && (GSM_com_state.sim800module->num_of_sms != 0)) // если есть непрочитанное SMS
-//	{
-//		recSMS();
-//		return;
-//	}
-
-	if (GSM_com_state.Status_of_mailing == busy) // если случилось что-то, что требует рассылки SMS-сообщений или GSM-модуль занят обработкой предидущего запроса
+    if (state_of_sim800_num1.Status == not_ready) // РµСЃР»Рё РѕР±СЃР»СѓР¶РёРІР°СЋС‰РёР№ РЅР°СЃ РјРѕРґСѓР»СЊ РЅРµ РіРѕС‚РѕРІ РЅРё С‡РµРіРѕ РЅРµ РґРµР»Р°РµРј
     {
-
-		sendSMS();
-    	return;
+        return;
     }
 
-//    if (GSM_com_state.Status_of_mailing == free) // если рассылка предидущего SMS-сообщения и обработка запроса на чтение SMS-сообщения закончены
-//    {
-//    	if ((reg74hc165_current_state_num1.arr_res[cur_dig_input].status.cur_log_state == 1) &&  // если на одном из входов случилась активное состояние
-//    		(reg74hc165_current_state_num1.arr_res[cur_dig_input].status.already_sent == 0))     // и об этом еще не разослано SMS-сообщение
-//    	{
-//    		GSM_com_state.Status_of_mailing = busy; // начинаем рассылку
-//    		reg74hc165_current_state_num1.arr_res[cur_dig_input].status.already_sent = 1;   // помечаем соответсвующий выход как отправленный на рассылку (что бы SMS разослалось один раз)
-//    		FLASH_Read_Msg_String(cur_dig_input, GSM_com_state.SMS_text, MAX_SIZE_STRING_8);
-//
-//    	}
-//    	else if (reg74hc165_current_state_num1.arr_res[cur_dig_input].status.cur_log_state == 0) // если на входе нет активного состояния
-//    	{
-//    		reg74hc165_current_state_num1.arr_res[cur_dig_input].status.already_sent = 0; // сбрасываем признак разосланного сообщения в ноль
-//    	}
-//    	cur_dig_input++;
-//    	if (cur_dig_input == NUM_OF_INPUT)
-//    	{
-//    		cur_dig_input = 0;
-//    	}
-//    	//проверяем входы АЦП
-//    }
+    //	if ((GSM_com_state.Status_of_ == free) && (GSM_com_state.sim800module->num_of_sms != 0)) // РµСЃР»Рё РµСЃС‚СЊ РЅРµРїСЂРѕС‡РёС‚Р°РЅРЅРѕРµ SMS
+    //	{
+    //		recSMS();
+    //		return;
+    //	}
+
+    if (GSM_com_state.Status_of_mailing == busy) // РµСЃР»Рё СЃР»СѓС‡РёР»РѕСЃСЊ С‡С‚Рѕ-С‚Рѕ, С‡С‚Рѕ С‚СЂРµР±СѓРµС‚ СЂР°СЃСЃС‹Р»РєРё SMS-СЃРѕРѕР±С‰РµРЅРёР№ РёР»Рё GSM-РјРѕРґСѓР»СЊ Р·Р°РЅСЏС‚ РѕР±СЂР°Р±РѕС‚РєРѕР№ РїСЂРµРґРёРґСѓС‰РµРіРѕ Р·Р°РїСЂРѕСЃР°
+    {
+
+        sendSMS();
+        return;
+    }
+
+    if (GSM_com_state.Status_of_mailing == free) // РµСЃР»Рё СЂР°СЃСЃС‹Р»РєР° РїСЂРµРґРёРґСѓС‰РµРіРѕ SMS-СЃРѕРѕР±С‰РµРЅРёСЏ Рё РѕР±СЂР°Р±РѕС‚РєР° Р·Р°РїСЂРѕСЃР° РЅР° С‡С‚РµРЅРёРµ SMS-СЃРѕРѕР±С‰РµРЅРёСЏ Р·Р°РєРѕРЅС‡РµРЅС‹
+    {
+        if ((reg74hc165_current_state_num1.arr_res[cur_dig_input].status.cur_log_state == 1) &&  // РµСЃР»Рё РЅР° РѕРґРЅРѕРј РёР· РІС…РѕРґРѕРІ СЃР»СѓС‡РёР»Р°СЃСЊ Р°РєС‚РёРІРЅРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
+                (reg74hc165_current_state_num1.arr_res[cur_dig_input].status.already_sent == 0))     // Рё РѕР± СЌС‚РѕРј РµС‰Рµ РЅРµ СЂР°Р·РѕСЃР»Р°РЅРѕ SMS-СЃРѕРѕР±С‰РµРЅРёРµ
+        {
+            GSM_com_state.Status_of_mailing = busy; // РЅР°С‡РёРЅР°РµРј СЂР°СЃСЃС‹Р»РєСѓ
+            reg74hc165_current_state_num1.arr_res[cur_dig_input].status.already_sent = 1;   // РїРѕРјРµС‡Р°РµРј СЃРѕРѕС‚РІРµС‚СЃРІСѓСЋС‰РёР№ РІС‹С…РѕРґ РєР°Рє РѕС‚РїСЂР°РІР»РµРЅРЅС‹Р№ РЅР° СЂР°СЃСЃС‹Р»РєСѓ (С‡С‚Рѕ Р±С‹ SMS СЂР°Р·РѕСЃР»Р°Р»РѕСЃСЊ РѕРґРёРЅ СЂР°Р·)
+            FLASH_Read_Msg_String(cur_dig_input, GSM_com_state.SMS_text, MAX_SIZE_STRING_8);
+
+        }
+        else if (reg74hc165_current_state_num1.arr_res[cur_dig_input].status.cur_log_state == 0) // РµСЃР»Рё РЅР° РІС…РѕРґРµ РЅРµС‚ Р°РєС‚РёРІРЅРѕРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ
+        {
+            reg74hc165_current_state_num1.arr_res[cur_dig_input].status.already_sent = 0; // СЃР±СЂР°СЃС‹РІР°РµРј РїСЂРёР·РЅР°Рє СЂР°Р·РѕСЃР»Р°РЅРЅРѕРіРѕ СЃРѕРѕР±С‰РµРЅРёСЏ РІ РЅРѕР»СЊ
+        }
+        cur_dig_input++;
+        if (cur_dig_input == NUM_OF_INPUT)
+        {
+            cur_dig_input = 0;
+        }
+        //РїСЂРѕРІРµСЂСЏРµРј РІС…РѕРґС‹ РђР¦Рџ
+    }
 
 }

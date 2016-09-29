@@ -1,4 +1,4 @@
-// Функции для передачи и приема данных по интерфейсу GSM
+п»ї// Р¤СѓРЅРєС†РёРё РґР»СЏ РїРµСЂРµРґР°С‡Рё Рё РїСЂРёРµРјР° РґР°РЅРЅС‹С… РїРѕ РёРЅС‚РµСЂС„РµР№СЃСѓ GSM
 
 #ifndef __GSM_COM_H_
 #define __GSM_COM_H_
@@ -6,13 +6,13 @@
 #define busy 1
 #define free 0
 
-#define SMS_send_start  1 // признак начала отправки SMS
-#define SMS_send_stop   0 // признак конца отправки SMS(когда GSM модуль ответит, что SMS точно ушла)
+#define SMS_send_start  1 // РїСЂРёР·РЅР°Рє РЅР°С‡Р°Р»Р° РѕС‚РїСЂР°РІРєРё SMS
+#define SMS_send_stop   0 // РїСЂРёР·РЅР°Рє РєРѕРЅС†Р° РѕС‚РїСЂР°РІРєРё SMS(РєРѕРіРґР° GSM РјРѕРґСѓР»СЊ РѕС‚РІРµС‚РёС‚, С‡С‚Рѕ SMS С‚РѕС‡РЅРѕ СѓС€Р»Р°)
 
-#define NUM_OF_ABONENTS 5 // NUM_OF_ABONENTS должно быть меньше MAX_NUM_OF_ABONENTS = 32
+#define NUM_OF_ABONENTS 5 // NUM_OF_ABONENTS РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РјРµРЅСЊС€Рµ MAX_NUM_OF_ABONENTS = 32
 
-void GSM_Com_Init(struct sim800_current_state * current_state); // функция инициализации коммуникационного интерфейса
+void GSM_Com_Init(struct sim800_current_state * current_state); // С„СѓРЅРєС†РёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РєРѕРјРјСѓРЅРёРєР°С†РёРѕРЅРЅРѕРіРѕ РёРЅС‚РµСЂС„РµР№СЃР°
 
-void GSM_Communication_routine(void); // главная коммуникационная функция GSM
+void GSM_Communication_routine(void); // РіР»Р°РІРЅР°СЏ РєРѕРјРјСѓРЅРёРєР°С†РёРѕРЅРЅР°СЏ С„СѓРЅРєС†РёСЏ GSM
 
 #endif

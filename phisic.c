@@ -310,7 +310,7 @@ void  InitADC(void)
 // Настройка сиситемного таймера
 void Init_SysTick()
 {
-	SysTick_Config(TIMER_TICK); // Вызываем стандартную функцию настройки системного таймера из core_cm3.h (в ней разрешается прерывание системного таймера)
+    SysTick_Config(TIMER_TICK); // Вызываем стандартную функцию настройки системного таймера из core_cm3.h (в ней разрешается прерывание системного таймера)
 }
 
 // Прерывания от UART1
@@ -351,6 +351,6 @@ void USART2_IRQHandler(void)
 // Прерывание системного таймера
 void SysTick_Handler(void)
 {
-	load_data74HC165(&reg74hc165_current_state_num1); // вызываем функцию чтения входов
-	GSM_Communication_routine(); // главная коммуникационная функция GSM
+    load_data74HC165(&reg74hc165_current_state_num1); // вызываем функцию чтения входов
+    GSM_Communication_routine(); // главная коммуникационная функция GSM
 }
