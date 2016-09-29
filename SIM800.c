@@ -482,6 +482,9 @@ uint8_t sim800_ATplusCMGD_request(struct sim800_current_state * current_state, u
     {
         return busy;                             // Запрос отправить не удалось, т.к. предидущий запрос еще не получен или не обработан
     }
+
+    current_state->mode_of_delete = mode_of_delete;
+
     memcpy(current_state->current_cmd, "AT+CMGD=", 9);
 
     uint8_t buf_string[3]; // в обычную SIM-карту помещается не более 10 - 20 СМС сообщений
@@ -495,6 +498,7 @@ uint8_t sim800_ATplusCMGD_request(struct sim800_current_state * current_state, u
     //                             2 — удаление прочитанных и отправленных сообщений
     //                             3 — удаление всех прочитанных, отправленных и не отправленных сообщений
     //                             4 — удаление всех сообщений
+
 
     itoa(mode_of_delete, buf_string, 10);
     strncat(current_state->current_cmd, buf_string, 2);
@@ -514,7 +518,18 @@ void sim800_ATplusCMGD_responce_handler(struct sim800_current_state * current_st
     }
     else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"OK",2)==0)
     {
-        current_state->result_of_last_execution = OK;
+        switch (current_state->mode_of_delete)
+        {
+            case 0:
+        	    if (current_state->num_of_sms > 0) current_state->num_of_sms --;
+        	    break;
+            case 4:
+        	    current_state->num_of_sms = 0;
+        	    break;
+            default:
+            	break;
+        }
+    	current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
         current_state->communication_stage = proc_completed;
         current_state->num_of_sms = 0;
@@ -1260,6 +1275,7 @@ uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uar
         }
     };
     count = 0;
+    current_state->num_of_sms = 0;
     if (current_state->result_of_last_execution == fail)
     {
     	return ATplusCMGDfail;

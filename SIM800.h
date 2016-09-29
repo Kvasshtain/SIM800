@@ -136,6 +136,7 @@ struct sim800_current_state{
     uint8_t IP_address_string[64];                  // ip-адрес IPv4 например 123.675.874.234 - максимум 16 символов, в IPv6 (на всякий случай) - максимум 40 символов, округлил до 64
     uint8_t Status;                                 // Статус: модуль готов к работе (ready), или не готов к работе (not_ready)
     uint8_t num_of_fail;                            // Число неудачно выполненых запросов (закончевшихся ERROR)
+    uint8_t mode_of_delete;                         // режим удаления SMS - сообщений в команде AT+CMGD
 };
 
 extern struct sim800_current_state state_of_sim800_num1; // модулей может быть несколько

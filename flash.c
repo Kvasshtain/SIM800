@@ -3,7 +3,8 @@
 #include "flash.h"
 #include "REG74HC165.h"
 
-const uint8_t  std_string_prefix[] = "ALARM ON INPUT "; // префикс строк текстовых сообщений, записываемых по умолчанию если соответствующая строка сообщения в ячеке-строек пуста
+const uint8_t  std_string_prefix1[] = "PREALARM ON INPUT "; // префикс строк текстовых сообщений, записываемых по умолчанию если соответствующая строка сообщения в ячеке-строек пуста
+const uint8_t  std_string_prefix2[] = "ALARM ON INPUT "; // префикс строк текстовых сообщений, записываемых по умолчанию если соответствующая строка сообщения в ячеке-строек пуста
 const uint32_t DATA_Pages[NUM_OF_STR_PAGE] = { start_DATA_Page_61 , start_DATA_Page_62 , start_DATA_Page_63 };
 
 //***************************************************************************************************************************************
@@ -33,7 +34,7 @@ uint8_t FLASH_Read_Byte(uint32_t page, uint16_t byte_shift, uint8_t * read_byte)
 		return 1;
 	}
 
-	if (byte_shift >= 1024)
+	if (byte_shift >= PAGE_SIZE_8)
 	{
 		return 3;
 	}
@@ -92,12 +93,12 @@ uint8_t FLASH_Read_String(uint32_t page, uint32_t shift, uint8_t * data_string, 
 
 //***************************************************************************************************************************************
 // функция чтения строки сообщения из флеш
-// страница флеш памяти разбивается условно на 8-мь 128-и байтных строк-ячеек (как раз 1024 байта - размер одной страницы)
-// принимает: 1) адрес страницы флеш памяти
-//            2) номер строки-ячейки (их в одной странице 8-мь штук)
+// страница флеш памяти разбивается условно на 8-мь 128-и байтных ячеек (как раз 1024 байта - размер одной страницы)
+// принимает: 1) номер ячейки под пару строк
+//            2) признак (0 или 1) - это первое сообщение или второе (например об отсутствии и присутствии сигнала)
 //            3) указатель на строку для копирования
 //            4) размер копируемой строки
-uint8_t FLASH_Read_Msg_String(uint8_t string_cell, uint8_t * data_string, uint32_t size)
+uint8_t FLASH_Read_Msg_String(uint8_t string_cell, uint8_t kind_of_msg, uint8_t * data_string, uint32_t size)
 {
 	uint32_t page;
 
@@ -106,27 +107,33 @@ uint8_t FLASH_Read_Msg_String(uint8_t string_cell, uint8_t * data_string, uint32
 		return 1;
 	}
 
-	if (string_cell > 24)
+	if (string_cell >= NUM_OF_INPUT_SIGNAL)
 	{
 		return 3;
 	}
 
 	page = start_DATA_Page_61;
 
-	if (string_cell > 16)
+	if (string_cell >= STR_CELL_IN_PAGE * 2)
 	{
-	    string_cell -= 16;
+	    string_cell -= STR_CELL_IN_PAGE * 2;
 	    page = start_DATA_Page_63;
 	}
 
-	if (string_cell > 8)
+	if (string_cell >= STR_CELL_IN_PAGE)
 	{
-	    string_cell -= 8;
+	    string_cell -= STR_CELL_IN_PAGE;
 	    page = start_DATA_Page_62;
 	}
-
-	return FLASH_Read_String(page, MAX_SIZE_STRING_8 * string_cell, data_string, size);
-
+    if (kind_of_msg == 0)
+    {
+    	return FLASH_Read_String(page, MAX_SIZE_STR_CELL * string_cell, data_string, size);
+    }
+	if (kind_of_msg == 1)
+	{
+		return FLASH_Read_String(page, MAX_SIZE_STR_CELL * string_cell + MAX_SIZE_STRING_8, data_string, size);
+	}
+	return 4; // если пользователь указал в типе сообщения не 0 и не 1
 }
 //***************************************************************************************************************************************
 
@@ -143,7 +150,7 @@ uint8_t FLASH_Read_Phone_Num(uint8_t string_cell, uint8_t * data_string, uint32_
 		return 1;
 	}
 
-	if (string_cell >= 32)
+	if (string_cell >= MAX_SIZE_STR_PHONE_8)
 	{
 		return 3;
 	}
@@ -164,7 +171,7 @@ uint8_t FLASH_Read_Config_Byte(uint16_t byte_shift, uint8_t * config_byte)
 		return 1;
 	}
 
-	if (byte_shift >= 1024)
+	if (byte_shift >= PAGE_SIZE_8)
 	{
 		return 3;
 	}
@@ -196,7 +203,7 @@ uint8_t FLASH_Write_Byte(uint32_t page, uint16_t byte_shift, uint8_t write_byte)
 		return 1;
 	}
 
-	if (byte_shift >= 1024)
+	if (byte_shift >= PAGE_SIZE_8)
 	{
 		return 3;
 	}
@@ -285,12 +292,12 @@ uint8_t FLASH_Write_String(uint32_t page, uint32_t shift, uint8_t * data_string,
 
 //***************************************************************************************************************************************
 // функция записи строки сообщения во флеш в одну из трех последних страниц
-// страница флеш памяти разбивается условно на 8-мь 128-и байтных строк-ячеек (как раз 1024 байта - размер одной страницы)
-// принимает: 1) адрес страницы флеш памяти
-//            2) номер строки-ячейки (их в одной странице 8-мь штук)
+// страница флеш памяти разбивается условно на 8-мь 128-и байтных ячеек (как раз 1024 байта - размер одной страницы)
+// принимает: 1) номер ячейки под пару строк
+//            2) признак (0 или 1) - это первое сообщение или второе (например об отсутствии и присутствии сигнала)
 //            3) указатель на записываемую строку
 //            4) размер записываемой строки
-uint8_t FLASH_Write_Msg_String(uint8_t string_cell, uint8_t * data_string, uint32_t size)
+uint8_t FLASH_Write_Msg_String(uint8_t string_cell, uint8_t kind_of_msg, uint8_t * data_string, uint32_t size)
 {
 	uint32_t page;
 
@@ -299,32 +306,39 @@ uint8_t FLASH_Write_Msg_String(uint8_t string_cell, uint8_t * data_string, uint3
 		return 1;
 	}
 
-	if (string_cell > 24)
+	if (string_cell >= NUM_OF_INPUT_SIGNAL)
 	{
 		return 3;
 	}
 
 	page = start_DATA_Page_61;
 
-	if (string_cell > 16)
+	if (string_cell >= STR_CELL_IN_PAGE * 2)
 	{
-	    string_cell -= 16;
+	    string_cell -= STR_CELL_IN_PAGE * 2;
 	    page = start_DATA_Page_63;
 	}
 
-	if (string_cell > 8)
+	if (string_cell >= STR_CELL_IN_PAGE)
 	{
-	    string_cell -= 8;
+	    string_cell -= STR_CELL_IN_PAGE;
 	    page = start_DATA_Page_62;
 	}
 
-	if (size > MAX_SIZE_STRING_8) // если размер строки окажется больше размера ячейки-строки обрезаем ее до размера ячейки-строки
+	if (size > MAX_SIZE_STRING_8) // если размер строки окажется больше максимального размера строки обрезаем ее до этого размера
 	{
         size = MAX_SIZE_STRING_8;
         data_string[MAX_SIZE_STRING_8-1]='\0'; // и последний символ - нулевой
 	}
-
-	return FLASH_Write_String(page, MAX_SIZE_STRING_8 * string_cell, data_string, size);
+    if (kind_of_msg == 0)
+    {
+    	return FLASH_Write_String(page, MAX_SIZE_STR_CELL * string_cell, data_string, size);
+    }
+	if (kind_of_msg == 1)
+	{
+		return FLASH_Write_String(page, MAX_SIZE_STR_CELL * string_cell + MAX_SIZE_STRING_8, data_string, size);
+	}
+	return 4; // если пользователь указал в типе сообщения не 0 и не 1
 }
 //***************************************************************************************************************************************
 
@@ -341,7 +355,7 @@ uint8_t FLASH_Write_Phone_Num(uint8_t string_cell, uint8_t * data_string, uint32
 		return 1;
 	}
 
-	if (string_cell >= 32)
+	if (string_cell >= MAX_SIZE_STR_PHONE_8)
 	{
 		return 3;
 	}
@@ -368,7 +382,7 @@ uint8_t FLASH_Write_Config_Byte(uint16_t byte_shift, uint8_t config_byte)
 		return 1;
 	}
 
-	if (byte_shift >= 1024)
+	if (byte_shift >= PAGE_SIZE_8)
 	{
 		return 3;
 	}
@@ -386,12 +400,13 @@ void FLASH_Write_Default_String(void)
 	uint8_t i = 0; // перебор страниц флеш
 	uint8_t j = 0; // перебор строк ячеек внутри страницы
 	uint8_t k = 0; // счетчик записываемых 32-х битных слов
-	uint8_t m = 0; // счетчик записаных строк
+	uint8_t m = 1; // счетчик записаных строк
 	uint32_t page;
 	uint32_t write_str[MAX_SIZE_STRING_32];
 	uint8_t string_of_num[4]; // строка содержащая номер входного сигнала (маловероятно, что число превысит 3-и порядка)
 	//uint32_t temp_buf[PAGE_SIZE_32]; // временный буффер в котором хранятся считанная страница из флеш памяти
-	uint8_t string_prefix_size = strlen(std_string_prefix);
+	uint8_t string_prefix_size1 = strlen(std_string_prefix1);
+	uint8_t string_prefix_size2 = strlen(std_string_prefix2);
 
 	if (0xFFFFFFFF != FLASH_Read(DATA_Pages[0])) // стертая флешь заполняется 0xFFFFFFFF
 	{
@@ -400,12 +415,20 @@ void FLASH_Write_Default_String(void)
 
     for (i=0; i<NUM_OF_STR_PAGE; i++) // перебераем все страницы флеш отведенные под хранение текстовых сообщений
     {
-    	for (j=0; j<NUM_OF_CELL_STR; j++) // перебираем все строки-ячейки в этих cтраницах
+    	for (j=0; j < NUM_OF_CELL_STR; j++) // перебираем все строки-ячейки в этих cтраницах
     	{
-          m++; // условный номер входного сигнала
-    	    memset(write_str,'\0',MAX_SIZE_STRING_8);
-    	    memcpy(write_str, std_string_prefix, string_prefix_size);
-    	    itoa(m , string_of_num, 10);
+    		memset(write_str,'\0',MAX_SIZE_STRING_8);
+    		if(j%2)
+            {
+    			memcpy(write_str, std_string_prefix1, string_prefix_size1);
+    			itoa(m , string_of_num, 10);
+    			m++; // условный номер входного сигнала
+            }
+    		else
+    		{
+    			memcpy(write_str, std_string_prefix2, string_prefix_size2);
+    			itoa(m , string_of_num, 10);
+			}
     	    strncat(write_str, string_of_num , 4);
     	    strncat(write_str, "\0", 1);
     	    for (k = 0; k < MAX_SIZE_STRING_32; k++)
@@ -430,8 +453,6 @@ void FLASH_Write_Default_Config(void)
 	uint32_t page;
 	uint32_t write_str[MAX_SIZE_STRING_8];
 	uint8_t string_of_num[4]; // строка содержащая номер входного сигнала (маловероятно, что число превысит 3-и порядка)
-	//uint32_t temp_buf[PAGE_SIZE_32]; // временный буффер в котором хранятся считанная страница из флеш памяти
-	uint8_t string_prefix_size = strlen(std_string_prefix);
 
 	if (0xFFFFFFFF != FLASH_Read(start_DATA_Page_59)) // стертая флешь заполняется 0xFFFFFFFF
 	{
