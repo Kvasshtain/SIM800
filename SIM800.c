@@ -449,7 +449,7 @@ void sim800_ATplusCMGS_responce_handler_st5(struct sim800_current_state * curren
 {
     if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"OK"))
     {
-        int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+        //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
         current_state->communication_stage = proc_completed;
@@ -657,14 +657,14 @@ void sim800_ATplusCMGR_responce_handler_st2(struct sim800_current_state * curren
         // +CMGR: "REC UNREAD","+7XXXXXXXXXX","","16/09/06,14:17:35+12" можно извлечь много полезной информации
         return;
     }
-    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"OK",2)==0) // если приходит сразу OK без текста сообщения, значит запрашиваемая ячейка пуста
+    else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"OK")) // если приходит сразу OK без текста сообщения, значит запрашиваемая ячейка пуста
     {
-        current_state->result_of_last_execution = fail;
+        current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL;
         current_state->communication_stage = proc_completed;
         return;
     }
-    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0) // Точнее будет +CMS ERROR: 517 (SIM-карта не готова)
+    else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR")) // Точнее будет +CMS ERROR: 517 (SIM-карта не готова)
     {
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
@@ -1409,11 +1409,12 @@ void unexpec_message_parse(struct sim800_current_state *current_state)
 {
     if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"+CMTI:")) // Пришло СМС сообщение (нпример "+CMTI: "SM",12")
     {
-        if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][7],"SM",2)==0)
+        if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][10],"SM",2)==0)
+        //if (stristr(&current_state->rec_buf[current_state->current_read_buf][7],"SM"))
         {
-            current_state->num_of_sms = atoi(&current_state->rec_buf[current_state->current_read_buf][12]);
+        	//current_state->num_of_sms++;
+        	current_state->num_of_sms = atoi(&current_state->rec_buf[current_state->current_read_buf][14]);
         }
-        //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return;
     }
     else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"Call Ready")) //

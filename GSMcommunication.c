@@ -7,14 +7,21 @@
 #include "SIM800.h"
 #include "GSMcommunication.h"
 
-// Структура описывает текущее состояние комуникационного GSM интерфейса
+// Глобальная структура описывает текущее состояние комуникационного GSM интерфейса
 struct GSM_communication_state{
-    uint8_t Status_of_mailing;                 // статус рассылки: занят (busy)- рассылка сообщения идет,
+    uint8_t Status_of_mailing;                 // статус рассылки SMS сообщений: занят (busy)- рассылка сообщения идет,
     //                  свободен (free) - рассылка сообщения закончена,
+    uint8_t Status_of_readSMS;                 // статус чтения SMS сообщений: занят (busy)- чтение сообщения идет,
+    //                  свободен (free) - чтение сообщения закончена,
     uint8_t status_mes_send;                   // флаг статуса отправки SMS может принимать SMS_send_stop = 0 или SMS_send_start = 1
-    uint8_t current_abonent;                   // тикущий номер абонета
+    uint8_t status_mes_rec;                    // флаг статуса приема SMS может принимать SMS_rec_stop = 0 или SMS_rec_start = 1
+    uint8_t status_mes_del;                    // флаг статуса удаления SMS может принимать SMS_del_stop = 0 или SMS_del_start = 1
+    uint8_t current_abonent;                   // тикущий номер абонента
     uint8_t max_num_of_abonent;                // максимальное число абонентов для рассылки
-    uint8_t SMS_text[MAX_SIZE_STRING_8];       // текущий текс SMS для отправки
+    uint8_t num_of_read_SMS;                   // число SMS, которые будут вычитываться из памяти SIM-карты
+    uint8_t current_read_SMS;                  // текущее читаемое SMS сообщение
+    uint8_t send_SMS_text[SEND_SMS_DATA_SIZE]; // текущий текс SMS для отправки
+    uint8_t rec_SMS_text[REC_SMS_DATA_SIZE];   // текущий текс принятого SMS
     uint8_t phone_num[MAX_SIZE_STR_PHONE_8];   // номер телефона текущего абонента
 };
 
@@ -23,82 +30,146 @@ struct GSM_communication_state GSM_com_state; // структура хранящ
 // функция инициализации коммуникационного интерфейса
 void GSM_Com_Init(struct sim800_current_state * GSMmod)
 {
-    GSM_com_state.SMS_text[0] = '\0';
-    uint8_t status_mes_send = SMS_send_stop;
+    GSM_com_state.send_SMS_text[0] = '\0';
+    GSM_com_state.status_mes_send = SMS_send_stop;
+    GSM_com_state.status_mes_rec  = SMS_rec_stop;
+    GSM_com_state.status_mes_rec  = SMS_del_stop;
     GSM_com_state.phone_num[0] = '\0';
     GSM_com_state.Status_of_mailing = free;
+    GSM_com_state.Status_of_readSMS = free;
     GSM_com_state.current_abonent = 0;
-    GSM_com_state.max_num_of_abonent = NUM_OF_ABONENTS;
+    GSM_com_state.max_num_of_abonent = NUM_OF_ABONENTS; // можно его ограничить числом меньшим NUM_OF_ABONENTS
+    GSM_com_state.num_of_read_SMS = 5;
+    GSM_com_state.current_read_SMS = 1;
 }
 
 // Функция отправки SMS
-// Функция пытается его отправить используя соответсвующую низкоуровневую функцию
+// Функция пытается отправить SMS используя соответсвующие низкоуровневые функции
 void sendSMS(void)
 {
-    do
-    {
-        FLASH_Read_Phone_Num(GSM_com_state.current_abonent, GSM_com_state.phone_num, MAX_SIZE_STR_PHONE_8);
-        GSM_com_state.current_abonent++;
-        if (GSM_com_state.current_abonent == GSM_com_state.max_num_of_abonent) // если пробежались по всем ячейкам флеш памяти и телефонных номеров больше нет
-        {
-            GSM_com_state.current_abonent = 0;
-            GSM_com_state.Status_of_mailing = free;
-            return;
-        }
-    }
-    while (GSM_com_state.phone_num[0] == 0xFF);
-    GSM_com_state.current_abonent--;
+	if (state_of_sim800_num1.communication_stage != proc_completed)     // если GSM-модуль занят обработкой предыдущего запроса
+	{
+	    return;
+	}
 
-    if ((state_of_sim800_num1.communication_stage == proc_completed)     // если GSM-модуль не занят обработкой предыдущего запроса и
-            && (GSM_com_state.status_mes_send == SMS_send_stop))         // мы еще не начали отсылать SMS
-    {
+	if (GSM_com_state.status_mes_send == SMS_send_stop)  // мы еще не начали отсылать SMS
+	{
+	    do
+        {
+            FLASH_Read_Phone_Num(GSM_com_state.current_abonent, GSM_com_state.phone_num, MAX_SIZE_STR_PHONE_8);
+            GSM_com_state.current_abonent++;
+            if (GSM_com_state.current_abonent == GSM_com_state.max_num_of_abonent) // если пробежались по всем ячейкам флеш памяти и телефонных номеров больше нет
+            {
+                GSM_com_state.current_abonent = 0;
+                GSM_com_state.Status_of_mailing = free;
+                GSM_com_state.send_SMS_text[0] = '\0'; // стираем SMS
+                return;
+            }
+        }
+        while (GSM_com_state.phone_num[0] == 0xFF);
+        GSM_com_state.current_abonent--;
+
         GSM_com_state.status_mes_send = SMS_send_start; // отправили запрос на отправку SMS
-        sim800_ATplusCMGS_request(&state_of_sim800_num1, GSM_com_state.phone_num, GSM_com_state.SMS_text);
-
+        sim800_ATplusCMGS_request(&state_of_sim800_num1, GSM_com_state.phone_num, GSM_com_state.send_SMS_text);
         return;
     }
 
-    if (state_of_sim800_num1.communication_stage == proc_completed) // если GSM-модуль не занят обработкой предыдущего запроса
+    GSM_com_state.status_mes_send = SMS_send_stop;
+    if (state_of_sim800_num1.result_of_last_execution == OK)
     {
-        GPIOA->ODR ^= GPIO_Pin_0;
-        GSM_com_state.status_mes_send = SMS_send_stop;
-        if (state_of_sim800_num1.result_of_last_execution == OK)
-        {
-            GSM_com_state.current_abonent++; // следующий абонент
-        }
-        return;
+        GSM_com_state.current_abonent++; // следующий абонент
     }
-
     return;
 }
 
 // Функция обработки принятых SMS
-uint8_t recSMS(void)
+void recSMS(void)
 {
-    static uint8_t recSMSstatus; // флаг ожидания прихода запрошенного SMS-сообщения
-    if ((recSMSstatus == free) && (state_of_sim800_num1.communication_stage == proc_completed)) // если SMS еще не читалось и модуль завершил обработку всех предидущих запросов
-    {
-        recSMSstatus = busy;
-        sim800_ATplusCMGR_request(&state_of_sim800_num1, 1, 0); // чтение SMS под номером 1 !!!!!!!!!!!!!!!!!!!!!
-    }
-    else if (state_of_sim800_num1.communication_stage == proc_completed)
-    {
+	if (state_of_sim800_num1.communication_stage != proc_completed)     // если GSM-модуль занят обработкой предыдущего запроса
+	{
+        return;
+	}
 
-        // Обработа принятого SMS
-        //!!!!!!!!!!GSM_com_state.sim800module->rec_SMS_data;
-        if (stristr(state_of_sim800_num1.rec_SMS_data,"BLA-BLA-BLA")) // Пришло СМС сообщение с текстом BLA-BLA-BLA
+	if (GSM_com_state.status_mes_del == SMS_del_start) // если был отправлен запрос на удаление SMS
+	{
+		if (state_of_sim800_num1.result_of_last_execution == OK)
         {
-            // !!!!! вызываем обработчик
-        }
-        else if (stristr(state_of_sim800_num1.rec_SMS_data,"helo-helo-helo")) //
-        {
-            // !!!!! вызываем обработчик
-        }
-        else
-        {
-            return; // на все остальные SMS-сообщения не обращаем внимание
-        }
-        recSMSstatus = free;
+			GSM_com_state.status_mes_del = SMS_del_stop;
+			GSM_com_state.Status_of_readSMS = free;    // процесс чтения и последующего удаления SMS завершон
+			return;
+	    }
+		else
+		{
+			sim800_ATplusCMGD_request(&state_of_sim800_num1, 1, 4); // пробуем удалить SMS еще раз
+		}
+	}
+
+	if (GSM_com_state.status_mes_rec == SMS_rec_stop) // мы еще не начали читать SMS
+	{
+		if (GSM_com_state.current_read_SMS == GSM_com_state.num_of_read_SMS + 1)
+		{
+			GSM_com_state.status_mes_del = SMS_del_start;
+			sim800_ATplusCMGD_request(&state_of_sim800_num1, 1, 4); // все SMS прочитаны их можно удалить
+			GSM_com_state.current_read_SMS = 1;
+			return;
+		}
+        GSM_com_state.status_mes_rec = SMS_rec_start; // отправили запрос на чтение SMS
+        sim800_ATplusCMGR_request(&state_of_sim800_num1, GSM_com_state.current_read_SMS, 0);
+        return;
+	}
+
+    GSM_com_state.status_mes_rec = SMS_rec_stop;
+    if (state_of_sim800_num1.result_of_last_execution == OK)
+    {
+        // парсим принятое SMS сообщение
+    	//GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!;
+    	GSM_com_state.current_read_SMS++; // следующий абонент
+    }
+    return;
+}
+
+// функция проверки состояния цифровых входов и рассылки сообщений
+void Dig_Signals_Check(void)
+{
+	uint8_t i;
+	uint8_t temp_str[MAX_SIZE_STRING_8];
+
+	GSM_com_state.send_SMS_text[0]='\0';
+
+    for (i = 0; i < NUM_OF_INPUT; i++)
+   	{
+
+    	if ((reg74hc165_current_state_num1.arr_res[i].status.is_meander == 1) &&  // если на одном из входов появился меандр или одиночный импульс
+            (reg74hc165_current_state_num1.arr_res[i].status.meandr_already_sent == 0)) // и об этом еще не разослано SMS-сообщение
+	    {
+			if (i < NUM_OF_INPUT_SIGNAL)  // обязательно проверяем есть ли у данного входного сигнала строка во флеш
+   		    {
+   		        FLASH_Read_Msg_String(i, 1, temp_str, MAX_SIZE_STRING_8);
+   		    }
+   		    if (strlen(GSM_com_state.send_SMS_text) + strlen(temp_str) + 5 < SEND_SMS_DATA_SIZE) // 5 - это 2 пробела в конце + 1 нулевой символ + 2-а прозапас
+   		    {
+       		    reg74hc165_current_state_num1.arr_res[i].status.meandr_already_sent = 1;   // помечаем соответсвующий выход как отправленный на рассылку
+       		    // что бы SMS разослалось один раз
+       		    strcat(GSM_com_state.send_SMS_text, temp_str);
+       		    strncat(GSM_com_state.send_SMS_text, "  ", 3);
+   		    }
+   	    }
+
+		if ((reg74hc165_current_state_num1.arr_res[i].status.is_const_sig == 1) &&  // если на одном из входов появился постоянный уровень
+            (reg74hc165_current_state_num1.arr_res[i].status.const_already_sent == 0)) // и об этом еще не разослано SMS-сообщение
+	        {
+			if (i < NUM_OF_INPUT_SIGNAL)
+		    {
+		        FLASH_Read_Msg_String(i, 0, temp_str, MAX_SIZE_STRING_8);
+		    }
+		    if (strlen(GSM_com_state.send_SMS_text) + strlen(temp_str) + 5 < SEND_SMS_DATA_SIZE)
+		    {
+    		    reg74hc165_current_state_num1.arr_res[i].status.const_already_sent = 1;
+    		    // что бы SMS разослалось один раз
+    		    strcat(GSM_com_state.send_SMS_text, temp_str);
+    		    strncat(GSM_com_state.send_SMS_text, "  ", 3);
+		    }
+	    }
     }
 }
 
@@ -111,51 +182,45 @@ void GSM_Communication_routine(void)
     static uint8_t cur_dig_input;
     static GSM_counter; // счетчик задержки работы коммуникационной функции GSM
 
-    GSM_counter++; // вызыв алгоритма обработчика происходит изредка для подавления дребезга контактов и
-    if (GSM_counter < 300) // еще не пришла очередь ни чего не делаем
+    GSM_counter++;
+    if (GSM_counter < 300)
     {
         return;
     }
-    GSM_counter = 0; // сбрасываем счетчик задержки вызова
+    GSM_counter = 0;
 
-    if (state_of_sim800_num1.Status == not_ready) // если обслуживающий нас модуль не готов ни чего не делаем
+    if (state_of_sim800_num1.Status == not_ready)
     {
         return;
     }
 
-    //	if ((GSM_com_state.Status_of_ == free) && (GSM_com_state.sim800module->num_of_sms != 0)) // если есть непрочитанное SMS
-    //	{
-    //		recSMS();
-    //		return;
-    //	}
-
-    if (GSM_com_state.Status_of_mailing == busy) // если случилось что-то, что требует рассылки SMS-сообщений или GSM-модуль занят обработкой предидущего запроса
+    if (GSM_com_state.Status_of_readSMS == busy) // если есть непрочитанные SMS
     {
+    	recSMS();
+    	return;
+    }
 
+    if (GSM_com_state.Status_of_mailing == busy) // если есть неразосланные SMS
+    {
         sendSMS();
         return;
     }
 
-    if (GSM_com_state.Status_of_mailing == free) // если рассылка предидущего SMS-сообщения и обработка запроса на чтение SMS-сообщения закончены
-    {
-        if ((reg74hc165_current_state_num1.arr_res[cur_dig_input].status.cur_log_state == 1) &&  // если на одном из входов случилась активное состояние
-                (reg74hc165_current_state_num1.arr_res[cur_dig_input].status.already_sent == 0))     // и об этом еще не разослано SMS-сообщение
-        {
-            GSM_com_state.Status_of_mailing = busy; // начинаем рассылку
-            reg74hc165_current_state_num1.arr_res[cur_dig_input].status.already_sent = 1;   // помечаем соответсвующий выход как отправленный на рассылку (что бы SMS разослалось один раз)
-            FLASH_Read_Msg_String(cur_dig_input, GSM_com_state.SMS_text, MAX_SIZE_STRING_8);
+    // проверяем цифровые входы
+    Dig_Signals_Check();
 
-        }
-        else if (reg74hc165_current_state_num1.arr_res[cur_dig_input].status.cur_log_state == 0) // если на входе нет активного состояния
-        {
-            reg74hc165_current_state_num1.arr_res[cur_dig_input].status.already_sent = 0; // сбрасываем признак разосланного сообщения в ноль
-        }
-        cur_dig_input++;
-        if (cur_dig_input == NUM_OF_INPUT)
-        {
-            cur_dig_input = 0;
-        }
-        //проверяем входы АЦП
+    // проверяем входы АЦП
+    ;
+
+    if (GSM_com_state.send_SMS_text[0] != '\0') // если есть что рассылать
+    {
+    	GSM_com_state.Status_of_mailing = busy;
+    	return;
     }
 
+    if (state_of_sim800_num1.num_of_sms) // если есть что прочитать
+    {
+    	GSM_com_state.Status_of_readSMS = busy;
+    	return;
+    }
 }

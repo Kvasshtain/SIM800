@@ -35,12 +35,12 @@ int main(void)
 
     FLASH_Write_Default_String(); // запись в последнии страницы флеш памяти дефолтных строк текстовых сообщений SMS если это еще не сделано
 
-    FLASH_Write_Msg_String(11, 0, "Hello0", strlen("Hello0")+1); // запись во флеш тестового SMS сообщения
-    FLASH_Write_Msg_String(11, 1, "Hello1", strlen("Hello1")+1); // запись во флеш тестового SMS сообщения
+    //FLASH_Write_Msg_String(11, 0, "Hello0", strlen("Hello0")+1); // запись во флеш тестового SMS сообщения
+    //FLASH_Write_Msg_String(11, 1, "Hello1", strlen("Hello1")+1); // запись во флеш тестового SMS сообщения
 
     FLASH_Write_Phone_Num(0, "89649955199", strlen("89649955199")); // запись телефонного номера в телефонную книгу
-    FLASH_Write_Phone_Num(1, "89061536606", strlen("89061536606")); // запись телефонного номера в телефонную книгу
-    FLASH_Write_Phone_Num(2, "89878145441", strlen("89878145441")); // запись телефонного номера в телефонную книгу
+    //FLASH_Write_Phone_Num(1, "89061536606", strlen("89061536606")); // запись телефонного номера в телефонную книгу
+    //FLASH_Write_Phone_Num(2, "89878145441", strlen("89878145441")); // запись телефонного номера в телефонную книгу
 
     // инициализация первого SIM800
     sim800_init(&state_of_sim800_num1, send_str_uart2, 2, 6239); // Первый SIM800 сидит на UART2
@@ -229,7 +229,14 @@ int main(void)
 
     while(1)
     {
-
+//    	if(reg74hc165_current_state_num1.arr_res[16-1].status.is_const_sig)
+//    	{
+//    		GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!
+//    	}
+//    	else
+//    	{
+//    		GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
+//		}
         //    	if (reg74hc165_current_state_num1.arr_res[12].status.cur_phis_state == 0) // Пример чтения физического состояния входов (если соответствующий вход в нуле то загорается светодиод)
         //        {
         //    		GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!

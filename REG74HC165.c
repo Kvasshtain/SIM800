@@ -53,14 +53,13 @@ void vanishing_recognition(struct reg74hc165_current_state * current_state)
             current_state->arr_res[i].status.const_already_sent = 0;
             current_state->arr_res[i].status.meandr_already_sent = 0;
             current_state->arr_res[i].status.is_const_sig = 0;
-            current_state->arr_res[i].status.is_meander = 1;
+            current_state->arr_res[i].status.is_meander = 0;
         }
     }
 }
 
-// Функция вызываемая из обработчика прерывания таймера
-// обработыает логическое состояния импулься
-// Обеспечивает фильтрацию импульсов (например коротких выбросов или пропаданий)
+// Функция обработыает логическое состояния цифровых входов
+// а так же обеспечивает фильтрацию импульсов (например коротких выбросов или пропаданий)
 void pulse_processing(struct reg74hc165_current_state * current_state)
 {
     uint8_t i;
@@ -68,11 +67,12 @@ void pulse_processing(struct reg74hc165_current_state * current_state)
     {
         if (current_state->arr_res[i].status.cur_log_state && (!current_state->arr_res[i].status.is_const_sig))
         {
-            current_state->arr_res[i].pulse_duration ++;
+        	current_state->arr_res[i].pulse_duration ++;
         }
 
         if (!current_state->arr_res[i].status.cur_log_state &&
-                (current_state->arr_res[i].status.const_already_sent || current_state->arr_res[i].status.meandr_already_sent))
+                (current_state->arr_res[i].status.const_already_sent || current_state->arr_res[i].status.meandr_already_sent)) // сигнал должен висеть в активном состоянии
+        	                                                                                                                   // пока не будет об этом сообщено
         {
             current_state->arr_res[i].pause_duration ++;
         }
@@ -85,7 +85,8 @@ void pulse_processing(struct reg74hc165_current_state * current_state)
 // Функция вызываемая из обработчика прерывания таймера производящая побитное чтение данных с выхода 74hc165
 void load_data74HC165(struct reg74hc165_current_state * current_state)
 {
-    //PL_PIN_UP;
+	pulse_processing(current_state);
+
     if (current_state->stage == pl_low)
     {
         PL_PIN_DOWN;

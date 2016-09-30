@@ -352,5 +352,6 @@ void USART2_IRQHandler(void)
 void SysTick_Handler(void)
 {
     load_data74HC165(&reg74hc165_current_state_num1); // вызываем функцию чтения входов
+    ;// вызываем функцию чтения АЦП
     GSM_Communication_routine(); // главная коммуникационная функция GSM
 }
