@@ -21,8 +21,9 @@ struct GSM_communication_state{
     uint8_t num_of_read_SMS;                   // число SMS, которые будут вычитываться из памяти SIM-карты
     uint8_t current_read_SMS;                  // текущее читаемое SMS сообщение
     uint8_t send_SMS_text[SEND_SMS_DATA_SIZE]; // текущий текс SMS для отправки
-    uint8_t rec_SMS_text[REC_SMS_DATA_SIZE];   // текущий текс принятого SMS
+    //uint8_t rec_SMS_text[REC_SMS_DATA_SIZE];   // текущий текс принятого SMS //!!! Данный буфер пока не нужен, вполне хватит приемного буфера драйвера SIM800 (или другого модуля)
     uint8_t phone_num[MAX_SIZE_STR_PHONE_8];   // номер телефона текущего абонента
+    volatile uint8_t number_of_failures;                // счетчик неудачных попыток (используется для защиты от зацикливания)
 };
 
 struct GSM_communication_state GSM_com_state; // структура хранящая текущее состояние коммуникационного GSM итерфеса
@@ -41,6 +42,7 @@ void GSM_Com_Init(struct sim800_current_state * GSMmod)
     GSM_com_state.max_num_of_abonent = NUM_OF_ABONENTS; // можно его ограничить числом меньшим NUM_OF_ABONENTS
     GSM_com_state.num_of_read_SMS = 5;
     GSM_com_state.current_read_SMS = 1;
+    GSM_com_state.number_of_failures = 0;
 }
 
 // Функция отправки SMS
@@ -63,6 +65,7 @@ void sendSMS(void)
                 GSM_com_state.current_abonent = 0;
                 GSM_com_state.Status_of_mailing = free;
                 GSM_com_state.send_SMS_text[0] = '\0'; // стираем SMS
+                GSM_com_state.number_of_failures = 0;  // сбрасываем счетчик неудачных попыток
                 return;
             }
         }
@@ -78,6 +81,15 @@ void sendSMS(void)
     if (state_of_sim800_num1.result_of_last_execution == OK)
     {
         GSM_com_state.current_abonent++; // следующий абонент
+    }
+    if (state_of_sim800_num1.result_of_last_execution == fail) // если неудача, то пробуем еще MAX_NUM_OF_FAIL - 1 раз и бросаем это занятие
+    {
+    	GSM_com_state.number_of_failures ++;
+    	if (GSM_com_state.number_of_failures >= MAX_NUM_OF_FAIL)
+    	{
+    		GSM_com_state.number_of_failures = 0;
+    		GSM_com_state.current_abonent++; // следующий абонент
+    	}
     }
     return;
 }
@@ -96,6 +108,7 @@ void recSMS(void)
         {
 			GSM_com_state.status_mes_del = SMS_del_stop;
 			GSM_com_state.Status_of_readSMS = free;    // процесс чтения и последующего удаления SMS завершон
+			GSM_com_state.number_of_failures = 0;      // сбрасываем счетчик неудачных попыток
 			return;
 	    }
 		else
@@ -122,8 +135,17 @@ void recSMS(void)
     if (state_of_sim800_num1.result_of_last_execution == OK)
     {
         // парсим принятое SMS сообщение
-    	//GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!;
-    	GSM_com_state.current_read_SMS++; // следующий абонент
+    	SMS_parse();
+    	GSM_com_state.current_read_SMS++; // следующее SMS
+    }
+    if (state_of_sim800_num1.result_of_last_execution == fail) // если неудача, то пробуем еще MAX_NUM_OF_FAIL - 1 раз и бросаем это занятие
+    {
+    	GSM_com_state.number_of_failures ++;
+    	if (GSM_com_state.number_of_failures >= MAX_NUM_OF_FAIL)
+    	{
+    		GSM_com_state.number_of_failures = 0;
+    		GSM_com_state.current_read_SMS++; // следующее SMS
+    	}
     }
     return;
 }
@@ -222,5 +244,116 @@ void GSM_Communication_routine(void)
     {
     	GSM_com_state.Status_of_readSMS = busy;
     	return;
+    }
+}
+
+// функция поиска в строке текста SMS телефонного номера абонета и его запись во флеш (телефонную книгу)
+void Phone_Num_Write()
+{
+	// SMS с текстом: "telN:telnumber", где N - порядковый номер абонента (1,2,3,...), telnumber - его телефон
+	int abonent_num;
+	int start_pos_num; // первый символ телефонного номера абонента
+	uint8_t phone_num[16];
+
+	abonent_num = atoi(state_of_sim800_num1.rec_SMS_data + 3) - 1; // 3 = strlen("tel")
+
+	if ((abonent_num < 0) || (abonent_num >= NUM_OF_ABONENTS)) // если пользователь ввел некорректный номер абонента
+	{
+		return;
+	}
+
+	start_pos_num = strchr(state_of_sim800_num1.rec_SMS_data, ':') + 1; // сразу после двоеточия идет номер телефона абонента
+	memcpy(phone_num, start_pos_num, 16);
+
+	FLASH_Write_Phone_Num(abonent_num, phone_num, strlen(phone_num) + 1);
+    return;
+}
+
+// функция поиска в строке текста SMS тревожного сообщения выдаваемого при периодической активности на цифровом входе (наличии меандра)
+// и его запись во флеш
+Text1_Write()
+{
+	// SMS с текстом: "vhod text1 N:text", где N - порядковый номер входа (1,2,3,...), text - текст подлежащий сохранению
+	int msg_num;
+	int start_pos_msg; // первый символ записываемого сообщения
+	uint8_t message[16];
+
+	msg_num = atoi(state_of_sim800_num1.rec_SMS_data + 11) - 1; // 3 = strlen("vhod text1 ")
+
+	if ((msg_num < 0) || (msg_num >= NUM_OF_INPUT_SIGNAL)) // если пользователь ввел некорректный номер входа
+	{
+		return;
+	}
+
+	start_pos_msg = strchr(state_of_sim800_num1.rec_SMS_data, ':') + 1; // сразу после двоеточия идет текст сохраняемого сообщения
+	memcpy(message, start_pos_msg, strlen(start_pos_msg) + 1);
+
+	FLASH_Write_Msg_String(msg_num, 1, message, strlen(message) + 1);
+    return;
+}
+
+// функция поиска в строке текста SMS тревожного сообщения выдаваемого при непрерывной активности на цифровом входе (длительный постоянный уровень)
+// и его запись во флеш
+Text2_Write()
+{
+	// SMS с текстом: "vhod text2 N:text", где N - порядковый номер входа (1,2,3,...), text - текст подлежащий сохранению
+	int msg_num;
+	int start_pos_msg; // первый символ записываемого сообщения
+	uint8_t message[16];
+
+	msg_num = atoi(state_of_sim800_num1.rec_SMS_data + 11) - 1; // 3 = strlen("vhod text2 ")
+
+	if ((msg_num < 0) || (msg_num >= NUM_OF_INPUT_SIGNAL)) // если пользователь ввел некорректный номер входа
+	{
+		return;
+	}
+
+	start_pos_msg = strchr(state_of_sim800_num1.rec_SMS_data, ':') + 1; // сразу после двоеточия идет текст сохраняемого сообщения
+	memcpy(message, start_pos_msg, strlen(start_pos_msg) + 1);
+
+	FLASH_Write_Msg_String(msg_num, 0, message, strlen(message) + 1);
+    return;
+}
+
+// Функция парсинга приходящих SMS - сообщений
+void SMS_parse(void)
+{
+    uint8_t start;
+
+	// Пример управления светодиодом с помощью SMS
+	if (strstr(state_of_sim800_num1.rec_SMS_data,"LED ON"))
+    {
+        GPIOA->ODR &= ~GPIO_Pin_0;
+        return;
+    }
+	else if (strstr(state_of_sim800_num1.rec_SMS_data,"LED OFF"))
+    {
+        GPIOA->ODR |=  GPIO_Pin_0;
+        return;
+    }
+
+	else if (start = stristr(state_of_sim800_num1.rec_SMS_data,"tel")) // если пользователь хочет ввести новый номер целевого абонента
+    {
+		// SMS с текстом: "telN:telnumber", где N - порядковый номер абонента (1,2,3,...), telnumber - его телефон
+		Phone_Num_Write();
+        return;
+    }
+	else if (start = stristr(state_of_sim800_num1.rec_SMS_data,"vhod text1"))
+		// если пользователь хочет поменять текст тревожного сообщения выдаваемого при периодической активности на цифровом входе (наличии меандра)
+    {
+		// SMS с текстом: "vhod text1 N:text", где N - порядковый номер входа (1,2,3,...), text - текст подлежащий сохранению
+		Text1_Write();
+        return;
+    }
+	else if (start = stristr(state_of_sim800_num1.rec_SMS_data,"vhod text2"))
+		// если пользователь хочет поменять текст тревожного сообщения выдаваемого при непрерывной активности на цифровом входе (длительный постоянный уровень)
+    {
+		// SMS с текстом: "vhod text2 N:text", где N - порядковый номер входа (1,2,3,...), text - текст подлежащий сохранению
+		Text2_Write();
+        return;
+    }
+    else
+    {
+        return; // а это все остальные тексты SMS сообщений
     }
 }

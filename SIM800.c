@@ -110,15 +110,10 @@ void sim800_AT_responce_handler(struct sim800_current_state * current_state)
 {
     if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"AT",2)==0) // Пришло ЭХО?
     {
-        //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return; // ни чего не делаем (хотя потом можно ставить некий флаг)
     }
     else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"OK",2)==0)
     {
-        //        if (strncasecmp(current_state->responce,"OK",2)==0)
-        //        {
-        //        	int j; GPIOA->ODR &= ~GPIO_Pin_0;// for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
-        //        }
         current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
         current_state->communication_stage = proc_completed;
@@ -382,23 +377,19 @@ void sim800_ATplusCMGS_responce_handler_st3(struct sim800_current_state * curren
 {
     if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],current_state->send_SMS_data))
     {
-        //int j; GPIOA->ODR &= ~GPIO_Pin_0;
         //Обработка служебного сообщения об отправки SMS вида:
         //+CMGS: XXX (,где XXX - некий условный номер отправленного SMS)
         // если требуется, то этот номер можно сохранить здесь
         current_state->response_handler = sim800_ATplusCMGS_responce_handler_st4; // просто переходим на следующую стадию
-        //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return;
     }
     else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"+CMGS:")) // на всякий случай проверим и служебную информацию
         // что бы сразу перескочить на 5-ую стадию
     {
-        //int j; GPIOA->ODR &= ~GPIO_Pin_0;
         //Обработка служебного сообщения об отправки SMS вида:
         //+CMGS: XXX (,где XXX - некий условный номер отправленного SMS)
         // если требуется, то этот номер можно сохранить здесь
         current_state->response_handler = sim800_ATplusCMGS_responce_handler_st5; // просто переходим на следующую стадию
-        //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return;
     }
     else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
@@ -682,12 +673,13 @@ void sim800_ATplusCMGR_responce_handler_st2(struct sim800_current_state * curren
 // Обработчик ответа команды "AT+CMGR= - чтение SMS стадия 3 - прием самого текста SMS
 void sim800_ATplusCMGR_responce_handler_st3(struct sim800_current_state * current_state)
 {
-    //			if (stristr(current_state->responce,"REC"))
-    //			{
-    //				GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!
-    //			}
-    current_state->response_handler = sim800_ATplusCMGR_responce_handler_st4;
-    memcpy(current_state->rec_SMS_data, &current_state->rec_buf[current_state->current_read_buf][0], strlen(&current_state->rec_buf[current_state->current_read_buf][0])); // копируем принятое SMS сообщение
+    uint32_t length;
+	current_state->response_handler = sim800_ATplusCMGR_responce_handler_st4;
+	length = strlen(&current_state->rec_buf[current_state->current_read_buf][0]);
+	// принятое SMS сообщение содержит в конце два последних символов \r\n, что-бы затереть их мы вместо \r пишем \0 и копируем length - 1 символов
+	current_state->rec_buf[current_state->current_read_buf][length - 2] = '\0';
+    memcpy(current_state->rec_SMS_data, &current_state->rec_buf[current_state->current_read_buf][0], length - 1);
+    // копируем принятое SMS сообщение без последних двух символов (которые \r\n)
     return;
 }
 
@@ -696,7 +688,6 @@ void sim800_ATplusCMGR_responce_handler_st4(struct sim800_current_state * curren
 {
     if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"OK"))
     {
-        //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         current_state->result_of_last_execution = OK;
         current_state->response_handler = NULL; // сбрасываем указатель на обработчик в NULL (ответ обработан)
         current_state->communication_stage = proc_completed;
@@ -943,7 +934,6 @@ uint8_t sim800_ATplusCSTT_request(struct sim800_current_state * current_state)
     }
     default:
     {
-        //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return ATplusCSTTfail;
         break;
     }
@@ -1429,7 +1419,6 @@ void unexpec_message_parse(struct sim800_current_state *current_state)
         current_state->is_SMS_Ready = ready;
         current_state->is_Call_Ready = ready;
         current_state->is_pin_req = no; // "+CPIN: READY" может вообще не быть. Сразу приходит "Call Ready" или "SMS Ready", и PIN-код вводить тоже не надо
-        //int j; GPIOA->ODR &= ~GPIO_Pin_0; for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return;
     }
     else if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"RING")) // Нам звонят.

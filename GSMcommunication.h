@@ -20,10 +20,13 @@
 #define SMS_del_stop    0 // признак конца удаления SMS
 
 
+#define MAX_NUM_OF_FAIL 5 // максимальное число повторных попыток при неудачном исходе запроса в GSM модуль
 
-#define NUM_OF_ABONENTS 5 // NUM_OF_ABONENTS должно быть меньше MAX_NUM_OF_ABONENTS = 32
+#define NUM_OF_ABONENTS 6 // NUM_OF_ABONENTS должно быть меньше MAX_NUM_OF_ABONENTS = 32
 
 void GSM_Com_Init(struct sim800_current_state * current_state); // функция инициализации коммуникационного интерфейса
+
+void SMS_parse(void); // Функция парсинга приходящих SMS - сообщений
 
 void sendSMS(void); // Функция отправки SMS
 
@@ -32,5 +35,7 @@ void recSMS(void); // Функция обработки принятых SMS
 void Dig_Signals_Check(void); // Функция проверки состояния цифровых входов и рассылки сообщений
 
 void GSM_Communication_routine(void); // главная коммуникационная функция GSM
+
+void SMS_parse(void); // Функция парсинга приходящих SMS - сообщений
 
 #endif
