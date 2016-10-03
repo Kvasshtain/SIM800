@@ -49,7 +49,7 @@
 
 uint32_t FLASH_Read(uint32_t address); // чтение 32-х битного слова из флеш памяти по заданному адресу
 
-uint8_t FLASH_Read_Byte(uint32_t page, uint16_t byte_shift, uint8_t * read_byte); // функция чтения одного байта из произвольной страницы флеш памяти по произвольному смещению
+int8_t FLASH_Read_Byte(uint32_t page, uint16_t byte_shift); // функция чтения одного байта из произвольной страницы флеш памяти по произвольному смещению
 
 uint8_t FLASH_Read_String(uint32_t page, uint32_t shift, uint8_t * data_string, uint32_t size); // функция чтения произвольной строки из флеш
 
@@ -57,7 +57,7 @@ uint8_t FLASH_Read_Msg_String(uint8_t string_cell, uint8_t kind_of_msg, uint8_t 
 
 uint8_t FLASH_Read_Phone_Num(uint8_t string_cell, uint8_t * data_string, uint32_t size); // функция чтения строки телефонного номера целевого абонента из четвертой с конца страницы флеш
 
-uint8_t FLASH_Read_Config_Byte(uint16_t byte_shift, uint8_t * config_byte); // функция чтения байта конфигурации цифровых входов из пятой с конца страницы флеш
+int8_t FLASH_Read_Config_Byte(uint16_t byte_shift); // функция чтения байта конфигурации цифровых входов из пятой с конца страницы флеш
 
 // ВНИМАНИЕ!!! Если запись во флешь происходит из прерывания таймера или функции, которая вызывается из прерывании таймера, то на время записи необходимо останавливать таймер
 
@@ -75,6 +75,10 @@ uint8_t FLASH_Write_Config_Byte(uint16_t byte_shift, uint8_t config_byte); // ф
 
 void FLASH_Write_Default_String(void); // функция первоначальной установки текстовых сообщений в строках-ячейках
 
+uint8_t FLASH_Write_Config_Page(uint8_t * config_array, uint32_t size); // функция записи всей конфигурационной страницы цифровых входов в пятую с конца страницы флеш
+
 void FLASH_Write_Default_Config(void); // функция проверки заполнена ли 5-ая по счету с конца страница флеш где хранится конфигурация и если она пуста, запись дефолтной конфигурации
+
+uint8_t FLASH_Write_Page(uint32_t page, uint8_t * data_array, uint32_t size); // функция записи всей страницы неким массивом данных
 
 #endif /* __FLASH_H */

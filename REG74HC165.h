@@ -48,14 +48,27 @@ enum r74hc165_stage {
     qh_ready,       //QH - готов, читаем данные
 };
 
-// БИТОВОЕ ПОЛЕ СТАТУСА СОСТОЯНИЯ ОДНОГО ЦИФРОВОГО ВХОДА
-struct diginput_status
+// БИТОВОЕ ПОЛЕ КОНФИГУРАЦИИ ОДНОГО ЦИФРОВОГО ВХОДА
+struct diginput_config_bf
 {
     unsigned enable              : 1; // может принимать FALSE - запрещен (неучитывается при выдаче сообщений наружу), либо TRUE - разрешон
-    unsigned cur_phis_state      : 1; // текущее физическое состояние: 1 - в единице (+питания)
-    //                               0 - в нуле (земля)
     unsigned alarm_state         : 1; // что считать состоянием активности: 1 - +питания - активное состояние
     //                                    0 - ноль (земля) - активное состояние
+    unsigned reserved            : 6; // зарезервированы
+
+};
+
+union diginput_config
+{
+	struct diginput_config_bf bf; // обращаемся как к битовому полю
+    uint8_t                   i8; // обращаемся как к байту
+};
+
+// БИТОВОЕ ПОЛЕ СТАТУСА ОДНОГО ЦИФРОВОГО ВХОДА
+struct diginput_status_bf
+{
+    unsigned cur_phis_state      : 1; // текущее физическое состояние: 1 - в единице (+питания)
+    //                               0 - в нуле (земля)
     unsigned cur_log_state       : 1; // текущее логическое состояние: 1 - активное
     //                               0 - неактивное
     // получается путем учета физического состояния cur_phis_state и того, что считать активным состоянием alarm_state
@@ -67,12 +80,20 @@ struct diginput_status
     // если нет, то до отправки SMS здесь 0, после отправки SMS здесь 1 (что бы SMS не отправлялись без остановки)
     unsigned is_const_sig        : 1; // признак, что активное или неактивное логическое состояние держится определенный интервал времени
     unsigned is_meander          : 1; // признак, что сигнал - меандр (с частотой MEANDER_F)
+    unsigned reserved            : 2; // зарезервированы
 
+};
+
+union diginput_status
+{
+	struct diginput_status_bf bf; // обращаемся как к битовому полю
+    uint8_t                   i8; // обращаемся как к байту
 };
 
 struct digital_input
 {
-    struct diginput_status status;            // текущее состояние входа
+	union diginput_config config;            // текущая конфигурация входа
+	union diginput_status status;            // текущее состояние входа
     uint32_t               str_flash_page;    // страница флешь памяти где хранится строка сообщения для текущего цифрового входа (ДРУЖЕСТВЕННОЕ ИМЯ ВХОДА)
     uint8_t                flash_string_cell; // конкретная ячейка внутри страницы флеш памяти
     uint32_t               pulse_duration;    // длительность активного логического состояния на цифровом входе в тиках системного таймера
@@ -90,7 +111,11 @@ struct reg74hc165_current_state{
 
 extern struct reg74hc165_current_state reg74hc165_current_state_num1; // регистровых каскадов может быть несколько
 
+
+void init_74HC165(struct reg74hc165_current_state * current_state); // Функция инициализации опроса регистра/регистров 74HC165
+
 void load_data74HC165(struct reg74hc165_current_state * current_state); // Функция вызываемая из обработчика прерывания таймера производящая побитное чтение данных с выхода 74hc165
+
 uint8_t diginputsconfig(struct digital_input * arr_res); //функция конфигурирования цифровых входов при включении системы или переконфигурировании пользователем назначает исходные состояния и считывает
 
 #endif

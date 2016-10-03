@@ -7,6 +7,14 @@
 #include "SIM800.h"
 #include "GSMcommunication.h"
 
+const char SAVE_TEL_CMD[] = "tel";
+
+const char SAVE_ALARM_T1_CMD[] = "vhod text1 ";
+
+const char SAVE_ALARM_T2_CMD[] = "vhod text2 ";
+
+const char SAVE_ACT_STATE_CMD[] = "akt sost vhod";
+
 // Глобальная структура описывает текущее состояние комуникационного GSM интерфейса
 struct GSM_communication_state{
     uint8_t Status_of_mailing;                 // статус рассылки SMS сообщений: занят (busy)- рассылка сообщения идет,
@@ -161,8 +169,8 @@ void Dig_Signals_Check(void)
     for (i = 0; i < NUM_OF_INPUT; i++)
    	{
 
-    	if ((reg74hc165_current_state_num1.arr_res[i].status.is_meander == 1) &&  // если на одном из входов появился меандр или одиночный импульс
-            (reg74hc165_current_state_num1.arr_res[i].status.meandr_already_sent == 0)) // и об этом еще не разослано SMS-сообщение
+    	if ((reg74hc165_current_state_num1.arr_res[i].status.bf.is_meander == 1) &&  // если на одном из входов появился меандр или одиночный импульс
+            (reg74hc165_current_state_num1.arr_res[i].status.bf.meandr_already_sent == 0)) // и об этом еще не разослано SMS-сообщение
 	    {
 			if (i < NUM_OF_INPUT_SIGNAL)  // обязательно проверяем есть ли у данного входного сигнала строка во флеш
    		    {
@@ -170,15 +178,15 @@ void Dig_Signals_Check(void)
    		    }
    		    if (strlen(GSM_com_state.send_SMS_text) + strlen(temp_str) + 5 < SEND_SMS_DATA_SIZE) // 5 - это 2 пробела в конце + 1 нулевой символ + 2-а прозапас
    		    {
-       		    reg74hc165_current_state_num1.arr_res[i].status.meandr_already_sent = 1;   // помечаем соответсвующий выход как отправленный на рассылку
+       		    reg74hc165_current_state_num1.arr_res[i].status.bf.meandr_already_sent = 1;   // помечаем соответсвующий выход как отправленный на рассылку
        		    // что бы SMS разослалось один раз
        		    strcat(GSM_com_state.send_SMS_text, temp_str);
        		    strncat(GSM_com_state.send_SMS_text, "  ", 3);
    		    }
    	    }
 
-		if ((reg74hc165_current_state_num1.arr_res[i].status.is_const_sig == 1) &&  // если на одном из входов появился постоянный уровень
-            (reg74hc165_current_state_num1.arr_res[i].status.const_already_sent == 0)) // и об этом еще не разослано SMS-сообщение
+		if ((reg74hc165_current_state_num1.arr_res[i].status.bf.is_const_sig == 1) &&  // если на одном из входов появился постоянный уровень
+            (reg74hc165_current_state_num1.arr_res[i].status.bf.const_already_sent == 0)) // и об этом еще не разослано SMS-сообщение
 	        {
 			if (i < NUM_OF_INPUT_SIGNAL)
 		    {
@@ -186,7 +194,7 @@ void Dig_Signals_Check(void)
 		    }
 		    if (strlen(GSM_com_state.send_SMS_text) + strlen(temp_str) + 5 < SEND_SMS_DATA_SIZE)
 		    {
-    		    reg74hc165_current_state_num1.arr_res[i].status.const_already_sent = 1;
+    		    reg74hc165_current_state_num1.arr_res[i].status.bf.const_already_sent = 1;
     		    // что бы SMS разослалось один раз
     		    strcat(GSM_com_state.send_SMS_text, temp_str);
     		    strncat(GSM_com_state.send_SMS_text, "  ", 3);
@@ -248,14 +256,14 @@ void GSM_Communication_routine(void)
 }
 
 // функция поиска в строке текста SMS телефонного номера абонета и его запись во флеш (телефонную книгу)
-void Phone_Num_Write()
+void Phone_Num_Save()
 {
 	// SMS с текстом: "telN:telnumber", где N - порядковый номер абонента (1,2,3,...), telnumber - его телефон
 	int abonent_num;
 	int start_pos_num; // первый символ телефонного номера абонента
 	uint8_t phone_num[16];
 
-	abonent_num = atoi(state_of_sim800_num1.rec_SMS_data + 3) - 1; // 3 = strlen("tel")
+	abonent_num = atoi(state_of_sim800_num1.rec_SMS_data + (sizeof(SAVE_TEL_CMD)-1)) - 1;
 
 	if ((abonent_num < 0) || (abonent_num >= NUM_OF_ABONENTS)) // если пользователь ввел некорректный номер абонента
 	{
@@ -263,22 +271,22 @@ void Phone_Num_Write()
 	}
 
 	start_pos_num = strchr(state_of_sim800_num1.rec_SMS_data, ':') + 1; // сразу после двоеточия идет номер телефона абонента
-	memcpy(phone_num, start_pos_num, 16);
-
+	memcpy(phone_num, start_pos_num, 16); // Функция FLASH_Write_Phone_Num и FLASH_Write_Msg_String - работают довольно медленно,
+	// а в это время может прийдти новая sms, по-этому копируем сохраняемый текст
 	FLASH_Write_Phone_Num(abonent_num, phone_num, strlen(phone_num) + 1);
     return;
 }
 
 // функция поиска в строке текста SMS тревожного сообщения выдаваемого при периодической активности на цифровом входе (наличии меандра)
 // и его запись во флеш
-Text1_Write()
+Alarm_Text1_Save()
 {
 	// SMS с текстом: "vhod text1 N:text", где N - порядковый номер входа (1,2,3,...), text - текст подлежащий сохранению
 	int msg_num;
 	int start_pos_msg; // первый символ записываемого сообщения
 	uint8_t message[16];
 
-	msg_num = atoi(state_of_sim800_num1.rec_SMS_data + 11) - 1; // 3 = strlen("vhod text1 ")
+	msg_num = atoi(state_of_sim800_num1.rec_SMS_data + (sizeof(SAVE_ALARM_T1_CMD)-1)) - 1;
 
 	if ((msg_num < 0) || (msg_num >= NUM_OF_INPUT_SIGNAL)) // если пользователь ввел некорректный номер входа
 	{
@@ -294,14 +302,14 @@ Text1_Write()
 
 // функция поиска в строке текста SMS тревожного сообщения выдаваемого при непрерывной активности на цифровом входе (длительный постоянный уровень)
 // и его запись во флеш
-Text2_Write()
+Alarm_Text2_Save()
 {
 	// SMS с текстом: "vhod text2 N:text", где N - порядковый номер входа (1,2,3,...), text - текст подлежащий сохранению
 	int msg_num;
 	int start_pos_msg; // первый символ записываемого сообщения
 	uint8_t message[16];
 
-	msg_num = atoi(state_of_sim800_num1.rec_SMS_data + 11) - 1; // 3 = strlen("vhod text2 ")
+	msg_num = atoi(state_of_sim800_num1.rec_SMS_data + (sizeof(SAVE_ALARM_T2_CMD)-1)) - 1;
 
 	if ((msg_num < 0) || (msg_num >= NUM_OF_INPUT_SIGNAL)) // если пользователь ввел некорректный номер входа
 	{
@@ -315,41 +323,107 @@ Text2_Write()
     return;
 }
 
+// функция поиска в строке текста SMS информации о том что считать активным состоянием на входе сообщения выдаваемого при непрерывной активности на цифровом входе (длительный постоянный уровень)
+// и его запись во флеш
+Alarm_State_Save()
+{
+	// SMS с текстом: "akt sost vhod:N1.S:N3-N5.S:...:NM.S", где Ni - порядковый номер входа (1,2,3,...), S - состояние, которое будет считаться активным: 1 - +питания, 0 - gnd
+	// пользователь может задать номера входов через дефис (через диапазон), в этом случае признак состояния, который следует после точки, будет применен ко всем этим входам
+	// если же пользователь ввел только один номер и следом точку и потом признак, то start_input_num будет равно stop_input_num
+	uint8_t start_input_num; // начальный номер входа
+	uint8_t stop_input_num;  // конечный номер входа
+	uint8_t current_str_pos; // текущий проверяемый символ сообщения
+	uint8_t alarm_state;     // сохраняемой конфигурация активного состояния
+	uint8_t message[16];
+	uint8_t i = 0;
+
+
+	current_str_pos = state_of_sim800_num1.rec_SMS_data;
+
+	do
+	{
+		current_str_pos = strchr(current_str_pos, ':');
+
+		if (current_str_pos == NULL) return; // если пользователь вообще не ввел номеров входов выходим
+
+		current_str_pos++; // сразу после двоеточия идет номер входа
+
+		start_input_num = atoi(current_str_pos) - 1;
+
+		// проверим следующие символы на наличие дефиса (число максимально может быть двузначным, так что следующий символ и сразу за ним)
+		if ((state_of_sim800_num1.rec_SMS_data[current_str_pos + 1] == '-') || (state_of_sim800_num1.rec_SMS_data[current_str_pos + 2] == '-'))
+		{
+			current_str_pos = strchr(current_str_pos, '-') + 1; // сразу после тире идет финальный номер входа в диапазоне номеров входов
+			stop_input_num = atoi(current_str_pos) - 1;
+		}
+		else
+		{
+			stop_input_num = start_input_num;
+		}
+
+		if (!(start_input_num < 0) || (start_input_num >= NUM_OF_INPUT_SIGNAL)) continue; // если пользователь ввел некорректный номер входа
+		if ( !(stop_input_num < 0) || (stop_input_num >= NUM_OF_INPUT_SIGNAL))  continue;
+		if (stop_input_num < start_input_num) stop_input_num = start_input_num; // если пользователь ввел некорректный диапазон входов
+
+		current_str_pos = strchr(current_str_pos, '.') + 1; // сразу после точки идет признак активного состояния входа (1 - + питания / 0 -gnd)
+		alarm_state = atoi(current_str_pos) - 1;
+
+		if ((alarm_state != 0) && (alarm_state != 1)) continue;// если пользователь ввел некорректное активное состояние входа
+
+		for (i = start_input_num; i <= stop_input_num; i++)
+		{
+			reg74hc165_current_state_num1.arr_res[i].config.bf.alarm_state = alarm_state;
+		}
+		save_config_74HC165(&reg74hc165_current_state_num1); // сохраняем конфигурацию во флеш
+	}
+	while (current_str_pos);
+
+    return;
+}
+
 // Функция парсинга приходящих SMS - сообщений
 void SMS_parse(void)
 {
     uint8_t start;
 
-	// Пример управления светодиодом с помощью SMS
-	if (strstr(state_of_sim800_num1.rec_SMS_data,"LED ON"))
-    {
-        GPIOA->ODR &= ~GPIO_Pin_0;
-        return;
-    }
-	else if (strstr(state_of_sim800_num1.rec_SMS_data,"LED OFF"))
-    {
-        GPIOA->ODR |=  GPIO_Pin_0;
-        return;
-    }
+//	// Пример управления светодиодом с помощью SMS
+//	if (strstr(state_of_sim800_num1.rec_SMS_data,"LED ON"))
+//    {
+//        GPIOA->ODR &= ~GPIO_Pin_0;
+//        return;
+//    }
+//	else if (strstr(state_of_sim800_num1.rec_SMS_data,"LED OFF"))
+//    {
+//        GPIOA->ODR |=  GPIO_Pin_0;
+//        return;
+//    }
 
-	else if (start = stristr(state_of_sim800_num1.rec_SMS_data,"tel")) // если пользователь хочет ввести новый номер целевого абонента
+	if (stristr(state_of_sim800_num1.rec_SMS_data, SAVE_TEL_CMD))
+	// если пользователь хочет ввести новый номер целевого абонента
     {
 		// SMS с текстом: "telN:telnumber", где N - порядковый номер абонента (1,2,3,...), telnumber - его телефон
-		Phone_Num_Write();
+		Phone_Num_Save();
         return;
     }
-	else if (start = stristr(state_of_sim800_num1.rec_SMS_data,"vhod text1"))
-		// если пользователь хочет поменять текст тревожного сообщения выдаваемого при периодической активности на цифровом входе (наличии меандра)
+	else if (stristr(state_of_sim800_num1.rec_SMS_data, SAVE_ALARM_T1_CMD))
+	// если пользователь хочет поменять текст тревожного сообщения выдаваемого при периодической активности на цифровом входе (наличии меандра)
     {
 		// SMS с текстом: "vhod text1 N:text", где N - порядковый номер входа (1,2,3,...), text - текст подлежащий сохранению
-		Text1_Write();
+		Alarm_Text1_Save();
         return;
     }
-	else if (start = stristr(state_of_sim800_num1.rec_SMS_data,"vhod text2"))
-		// если пользователь хочет поменять текст тревожного сообщения выдаваемого при непрерывной активности на цифровом входе (длительный постоянный уровень)
+	else if (stristr(state_of_sim800_num1.rec_SMS_data, SAVE_ALARM_T2_CMD))
+	// если пользователь хочет поменять текст тревожного сообщения выдаваемого при непрерывной активности на цифровом входе (длительный постоянный уровень)
     {
 		// SMS с текстом: "vhod text2 N:text", где N - порядковый номер входа (1,2,3,...), text - текст подлежащий сохранению
-		Text2_Write();
+		Alarm_Text2_Save();
+        return;
+    }
+	else if (stristr(state_of_sim800_num1.rec_SMS_data, SAVE_ACT_STATE_CMD))
+	// если пользователь хочет поменять уровень активного состояний на входе/входах (0 или +питания) которое будет приводить к отсылке тревожного SMS - сообщения
+    {
+		// SMS с текстом: "akt sost vhod:N1.S:N3-N5.S:...:NM.S", где Ni - порядковый номер входа (1,2,3,...), S - состояние, которое будет считаться активным: 1 - +питания, 0 - gnd
+		Alarm_State_Save();
         return;
     }
     else

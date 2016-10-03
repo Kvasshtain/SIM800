@@ -24,6 +24,18 @@
 
 #define NUM_OF_ABONENTS 6 // NUM_OF_ABONENTS должно быть меньше MAX_NUM_OF_ABONENTS = 32
 
+//#define SAVE_TEL_CMD_TXT = "tel";
+//#define SAVE_TEL_CMD_LENG (sizeof(SAVE_TEL_CMD)-1)
+//
+//#define SAVE_ALARM_T1_CMD_TXT = "vhod text1 ";
+//#define SAVE_ALARM_T1_CMD_LENG (sizeof(SAVE_ALARM_T1_CMD)-1)
+//
+//#define SAVE_ALARM_T2_CMD_TXT = "vhod text2 ";
+//#define SAVE_ALARM_T2_CMD_LENG (sizeof(SAVE_ALARM_T2_CMD)-1)
+//
+//#define SAVE_ACT_STATE_CMD_TXT = "akt sost vhod";
+//#define SAVE_ACT_STATE_CMD_LENG (sizeof(SAVE_ACT_STATE_CMD)-1)
+
 void GSM_Com_Init(struct sim800_current_state * current_state); // функция инициализации коммуникационного интерфейса
 
 void SMS_parse(void); // Функция парсинга приходящих SMS - сообщений

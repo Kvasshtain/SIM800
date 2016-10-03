@@ -38,13 +38,19 @@ int main(void)
     //FLASH_Write_Msg_String(11, 0, "Hello0", strlen("Hello0")+1); // запись во флеш тестового SMS сообщения
     //FLASH_Write_Msg_String(11, 1, "Hello1", strlen("Hello1")+1); // запись во флеш тестового SMS сообщения
 
-    FLASH_Write_Phone_Num(0, "89649955199", strlen("89649955199")); // запись телефонного номера в телефонную книгу
+    //FLASH_Write_Phone_Num(0, "89649955199", strlen("89649955199")); // запись телефонного номера в телефонную книгу
     //FLASH_Write_Phone_Num(1, "89061536606", strlen("89061536606")); // запись телефонного номера в телефонную книгу
     //FLASH_Write_Phone_Num(2, "89878145441", strlen("89878145441")); // запись телефонного номера в телефонную книгу
 
-    // инициализация первого SIM800
+    // инициализация каскада регистров 74HC165
+    init_74HC165(&reg74hc165_current_state_num1);
+
+    // инициализация SIM800
     sim800_init(&state_of_sim800_num1, send_str_uart2, 2, 6239); // Первый SIM800 сидит на UART2
+
     // запуск системного таймера надо производить только после настройки SIM800
+    Init_SysTick(); // разрешаем работу системного таймера
+
 
     //    if ((state_of_sim800_num1.communication_stage == proc_completed))
     //    {
@@ -64,7 +70,7 @@ int main(void)
     //	}
     //	sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "TEST3"); // отправка SMS
 
-    Init_SysTick(); // разрешаем работу системного таймера
+
 
 
 
