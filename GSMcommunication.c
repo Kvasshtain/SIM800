@@ -4,16 +4,28 @@
 
 #include "flash.h"
 #include "REG74HC165.h"
+#include "adc.h"
 #include "SIM800.h"
 #include "GSMcommunication.h"
 
+// префиксы строк входящих SMS содержащих команды
 const char SAVE_TEL_CMD[] = "tel";
-
 const char SAVE_ALARM_T1_CMD[] = "vhod text1 ";
-
 const char SAVE_ALARM_T2_CMD[] = "vhod text2 ";
-
 const char SAVE_ACT_STATE_CMD[] = "akt sost vhod";
+
+// тексты SMS отправляемые при пренижении/превышении порогов контролируемых напряжений
+const char DEC_TH_EXT_BAT_MSG[] = "No external bat";
+const char INC_TH_EXT_BAT_MSG[] = "Yes external bat";
+const char DEC_MAIN_VOLT_MSG[]  = "No 220 V";
+const char INC_MAIN_VOLT_MSG[]  = "Yes 220 V";
+const char DEC_TH_BACKUP_MSG[]  = "No backup V";
+const char INC_TH_BACKUP_MSG[]  = "Yes backup V";
+const char DEC_TH_BAT_MSG[]     = "No internal bat";
+const char INC_TH_BAT_MSG[]     = "Yes internal bat";
+
+const char* POWER_DOWN_MSG[NUM_OF_ADC_CHANNEL] = {DEC_TH_EXT_BAT_MSG, DEC_MAIN_VOLT_MSG, DEC_TH_BACKUP_MSG, DEC_TH_BAT_MSG};
+const char* POWER_UP_MSG[NUM_OF_ADC_CHANNEL]   = {INC_TH_EXT_BAT_MSG, INC_MAIN_VOLT_MSG, INC_TH_BACKUP_MSG, INC_TH_BAT_MSG};
 
 // Глобальная структура описывает текущее состояние комуникационного GSM интерфейса
 struct GSM_communication_state{
@@ -164,8 +176,6 @@ void Dig_Signals_Check(void)
 	uint8_t i;
 	uint8_t temp_str[MAX_SIZE_STRING_8];
 
-	GSM_com_state.send_SMS_text[0]='\0';
-
     for (i = 0; i < NUM_OF_INPUT; i++)
    	{
 
@@ -178,7 +188,7 @@ void Dig_Signals_Check(void)
    		    }
    		    if (strlen(GSM_com_state.send_SMS_text) + strlen(temp_str) + 5 < SEND_SMS_DATA_SIZE) // 5 - это 2 пробела в конце + 1 нулевой символ + 2-а прозапас
    		    {
-       		    reg74hc165_current_state_num1.arr_res[i].status.bf.meandr_already_sent = 1;   // помечаем соответсвующий выход как отправленный на рассылку
+       		    reg74hc165_current_state_num1.arr_res[i].status.bf.meandr_already_sent = 1;   // помечаем соответсвующий вход как отправленный на рассылку
        		    // что бы SMS разослалось один раз
        		    strcat(GSM_com_state.send_SMS_text, temp_str);
        		    strncat(GSM_com_state.send_SMS_text, "  ", 3);
@@ -203,6 +213,40 @@ void Dig_Signals_Check(void)
     }
 }
 
+// функция проверки состояния аналоговых входов и рассылки сообщений
+void Analog_Signals_Check(void)
+{
+	uint8_t i;
+	uint8_t temp_str[MAX_SIZE_STRING_8];
+
+	for (i = 0; i < NUM_OF_ADC_CHANNEL; i++)
+	{
+		if ((ADC_current_state_num1.result[i].analog_ch_status.is_normal) &&               // если напряжение выше порога
+		    (ADC_current_state_num1.result[i].analog_ch_status.incr_th_already_sent == 0)) // и об этом еще не разослано SMS-сообщение
+		{
+			if (strlen(GSM_com_state.send_SMS_text) + strlen(POWER_UP_MSG[i]) + 5 < SEND_SMS_DATA_SIZE) // 5 - это 2 пробела в конце + 1 нулевой символ + 2 прозапас
+			{
+				ADC_current_state_num1.result[i].analog_ch_status.incr_th_already_sent = 1;   // помечаем соответсвующий вход как отправленный на рассылку
+			    // что бы SMS разослалось один раз
+			    strcat(GSM_com_state.send_SMS_text, POWER_UP_MSG[i]);
+			    strncat(GSM_com_state.send_SMS_text, "  ", 3);
+			}
+		}
+
+		if ((!ADC_current_state_num1.result[i].analog_ch_status.is_normal) &&              // если напряжение ниже порога
+		    (ADC_current_state_num1.result[i].analog_ch_status.decr_th_already_sent == 0)) // и об этом еще не разослано SMS-сообщение
+		{
+			if (strlen(GSM_com_state.send_SMS_text) + strlen(POWER_DOWN_MSG[i]) + 5 < SEND_SMS_DATA_SIZE) // 5 - это 2 пробела в конце + 1 нулевой символ + 2 прозапас
+			{
+				ADC_current_state_num1.result[i].analog_ch_status.decr_th_already_sent = 1;   // помечаем соответсвующий вход как отправленный на рассылку
+			    // что бы SMS разослалось один раз
+			    strcat(GSM_com_state.send_SMS_text, POWER_DOWN_MSG[i]);
+			    strncat(GSM_com_state.send_SMS_text, "  ", 3);
+			}
+		}
+	}
+}
+
 // главная коммуникационная функция GSM
 // может вызываться из обработчика прерывания (например таймера)
 // или из одного из потоков операционной системы (например FreeRTOS, но не проверял пока)
@@ -210,10 +254,10 @@ void GSM_Communication_routine(void)
 {
     // проверяем дискретные входы
     static uint8_t cur_dig_input;
-    static GSM_counter; // счетчик задержки работы коммуникационной функции GSM
+    static uint16_t GSM_counter; // счетчик задержки работы коммуникационной функции GSM
 
     GSM_counter++;
-    if (GSM_counter < 300)
+    if (GSM_counter < 400)
     {
         return;
     }
@@ -236,11 +280,14 @@ void GSM_Communication_routine(void)
         return;
     }
 
+    // Перед формированием нового SMS  сообщения затираем старое
+    GSM_com_state.send_SMS_text[0]='\0';
+
     // проверяем цифровые входы
     Dig_Signals_Check();
 
     // проверяем входы АЦП
-    ;
+    //Analog_Signals_Check();
 
     if (GSM_com_state.send_SMS_text[0] != '\0') // если есть что рассылать
     {

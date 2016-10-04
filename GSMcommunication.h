@@ -46,6 +46,8 @@ void recSMS(void); // Функция обработки принятых SMS
 
 void Dig_Signals_Check(void); // Функция проверки состояния цифровых входов и рассылки сообщений
 
+void Analog_Signals_Check(void); // функция проверки состояния аналоговых входов и рассылки сообщений
+
 void GSM_Communication_routine(void); // главная коммуникационная функция GSM
 
 void SMS_parse(void); // Функция парсинга приходящих SMS - сообщений

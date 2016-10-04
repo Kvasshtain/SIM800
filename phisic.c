@@ -6,6 +6,7 @@
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_usart.h"
 #include "stm32f10x_dma.h"
+#include "stm32f10x_adc.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -14,6 +15,7 @@
 #include "SIM800.h"
 #include "REG74HC165.h"
 #include "GSMcommunication.h"
+#include "adc.h"
 
 //uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
 //int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
@@ -305,6 +307,24 @@ void  InitADC(void)
     ADC1->CR2   |=  ADC_CR2_EXTTRIG;
     ADC1->CR2   |=  ADC_CR2_ADON;
     ADC_TempSensorVrefintCmd(ENABLE); //TSVREFE_bit (16 - канал встроенный датчик температуры внутри процессора)
+
+    ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE); // разрешаем прерывание по окончаню преобразования
+
+    // калибровка АЦП
+    ADC_ResetCalibration(ADC1);
+    while (ADC_GetResetCalibrationStatus(ADC1)) { };
+    ADC_StartCalibration(ADC1);
+    while (ADC_GetCalibrationStatus(ADC1)) { };
+
+    // Настройка группы приоритета прерываний
+    //NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
+
+    NVIC_InitTypeDef NVIC_InitStructure;
+    NVIC_InitStructure.NVIC_IRQChannel = ADC1_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
 }
 
 // Настройка сиситемного таймера
@@ -348,10 +368,21 @@ void USART2_IRQHandler(void)
     }
 }
 
+void ADC1_IRQHandler(void) {
+    if (ADC_GetITStatus(ADC1, ADC_IT_EOC))
+    {
+
+        ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
+        // Вызываем обработку
+        ADC_processing(&ADC_current_state_num1, ADC_GetConversionValue(ADC1));
+    };
+};
+
 // Прерывание системного таймера
 void SysTick_Handler(void)
 {
     load_data74HC165(&reg74hc165_current_state_num1); // вызываем функцию чтения входов
     ;// вызываем функцию чтения АЦП
     GSM_Communication_routine(); // главная коммуникационная функция GSM
+    ADC_conversion_start(&ADC_current_state_num1);
 }
