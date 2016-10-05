@@ -32,6 +32,8 @@ int main(void)
 
     FLASH_Write_Default_String(); // запись в последнии страницы флеш памяти дефолтных строк текстовых сообщений SMS если это еще не сделано
 
+    FLASH_Write_Default_Config(); // запись дефолтной конфигурации входов
+
     // инициализация каскада регистров 74HC165
     init_74HC165(&reg74hc165_current_state_num1);
 
@@ -43,11 +45,38 @@ int main(void)
 
 
 
+    // ОТЛАДКА!!!
+//    int k;
+//    for (k = 0; k<5; k++)
+//    {
+//    	while (state_of_sim800_num1.communication_stage != proc_completed) // ждем пока не ответит OK
+//    	{
+//    	};
+//    	sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "Yes 220V.No extbat.No backup   ."); // отправка SMS
+//    }
 
-
-
-
-
+//    volatile int i,j;
+//    sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "Yes 220V.No extbat.No backup   juheafalfvk."); // отправка SMS
+//    for(i=0;i<0x1000000;i++);
+//    {
+//       for(j=0;j<0x10;j++);
+//    }
+//    //state_of_sim800_num1.communication_stage = proc_completed;
+//    sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "Yes 220V.No extbat.No backup   juheafalfvk."); // отправка SMS
+//
+//    for(i=0;i<0x1000000;i++);
+//    {
+//       for(j=0;j<0x10;j++);
+//    }
+//    //state_of_sim800_num1.communication_stage = proc_completed;
+//    sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "Yes 220V.No extbat.No backup   juheafalfvk."); // отправка SMS
+//
+//    for(i=0;i<0x1000000;i++);
+//    {
+//       for(j=0;j<0x10;j++);
+//    }
+//    //state_of_sim800_num1.communication_stage = proc_completed;
+//    sim800_ATplusCMGS_request(&state_of_sim800_num1, "+79649955199", "Yes 220V.No extbat.No backup   juheafalfvk."); // отправка SMS
 
 
 
@@ -241,10 +270,18 @@ int main(void)
     //
     //    sim800_ATplusCUSD_request(&state_of_sim800_num1, MTS_balance_request); // проверка баланса SIM карты
 
-
+    volatile int i,j;
     while(1)
     {
-//    	if(reg74hc165_current_state_num1.arr_res[16-1].status.is_const_sig)
+       for(i=0;i<0x100000;i++);
+       {
+          for(j=0;j<0x10;j++);
+       }
+       GPIOA->ODR ^= GPIO_Pin_0;
+
+
+
+    	//    	if(reg74hc165_current_state_num1.arr_res[16-1].status.is_const_sig)
 //    	{
 //    		GPIOA->ODR &= ~GPIO_Pin_0; // ОТЛАДКА!!!
 //    	}

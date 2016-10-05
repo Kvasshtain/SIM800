@@ -4,6 +4,7 @@
 #include "stm32f10x.h"
 #include "flash.h"
 #include "REG74HC165.h"
+#include "stm32f10x_gpio.h"
 #include "stm32f10x_flash.h"
 
 const uint8_t  std_string_prefix1[] = "PREALARM ON INPUT "; // префикс строк текстовых сообщений, записываемых по умолчанию если соответствующая строка сообщения в ячеке-строек пуста
@@ -24,8 +25,6 @@ uint32_t FLASH_Read(uint32_t address) // чтение данных из флеш
 //            3) указатель на переменную типа uint8_t, куда будет произведена запись
 int8_t FLASH_Read_Byte(uint32_t page, uint16_t byte_shift)
 {
-    uint32_t byte_shift32;
-
     union
     {
         uint32_t i32;
@@ -37,10 +36,8 @@ int8_t FLASH_Read_Byte(uint32_t page, uint16_t byte_shift)
         return -1;
     }
 
-    byte_shift32 = byte_shift - byte_shift%4; // чтение ведется по 4-байта за раз, так что вычитывать будем сразу 4-е с последующим извлечением нужного байта
-
     // читаем ячеку из флеш
-    temp_buf.i32 = FLASH_Read(page + byte_shift32); // сохраняем данные 32-х битной ячейки флеш памяти
+    temp_buf.i32 = FLASH_Read(page + byte_shift/4); // сохраняем данные 32-х битной ячейки флеш памяти
 
     return temp_buf.i8[byte_shift%4];
 }
@@ -187,25 +184,16 @@ uint8_t FLASH_Write_Byte(uint32_t page, uint16_t byte_shift, uint8_t write_byte)
 {
     uint32_t i;
 
-    uint32_t byte_shift32;
-
     union
     {
         uint32_t i32;
         uint8_t  i8[4];
     } temp_buf[PAGE_SIZE_32];
 
-    if (write_byte == NULL)
-    {
-        return 1;
-    }
-
     if (byte_shift >= PAGE_SIZE_8)
     {
         return 3;
     }
-
-    byte_shift32 = byte_shift - byte_shift%4; // запись ведется по 4-байта за раз, так что вычитывать будем сразу 4-е с последующим извлечением нужного байта
 
     // читаем страницу флеш во временный буфер
     for (i = 0; i < PAGE_SIZE_32; i++) // чтение идет сразу по 4-е байта
@@ -213,7 +201,7 @@ uint8_t FLASH_Write_Byte(uint32_t page, uint16_t byte_shift, uint8_t write_byte)
         temp_buf[i].i32 = FLASH_Read(page + 4*i);
     }
 
-    temp_buf[byte_shift - byte_shift%4].i8[byte_shift%4] = write_byte; // изменяем данные
+    temp_buf[byte_shift/4].i8[byte_shift%4] = write_byte; // изменяем данные
 
     FLASH_ErasePage(page); // стираем страницу флеш памяти
 
@@ -370,15 +358,11 @@ uint8_t FLASH_Write_Phone_Num(uint8_t string_cell, uint8_t * data_string, uint32
 //            2) указатель на записываемую структуру конфигурации
 uint8_t FLASH_Write_Config_Byte(uint16_t byte_shift, uint8_t config_byte)
 {
-    if (config_byte == NULL)
-    {
-        return 1;
-    }
-
     if (byte_shift >= PAGE_SIZE_8)
     {
         return 3;
     }
+
 
     return FLASH_Write_Byte(start_DATA_Page_59, byte_shift, config_byte);
 }
@@ -508,7 +492,7 @@ void FLASH_Write_Default_Config(void)
 
     for (i=0; i<NUM_OF_INPUT; i++) // перебераем столько ячеек страницы конфигурации цифровых входов во флеш сколько имеем входов
     {
-        FLASH_Write_Config_Byte(i, 0); // пока все по нулям
+        FLASH_Write_Config_Byte(i, 0); // все по нулям
     }
 }
 //***************************************************************************************************************************************

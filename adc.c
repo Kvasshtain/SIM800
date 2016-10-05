@@ -20,10 +20,10 @@ void ADC_init_routine(struct ADC_current_state *current_state)
 	}
 
 	// назначаем пороги
-	current_state->result[0].decrease_thteshold = DECREASE_THRESHOLD_EXT_BAT;
-	current_state->result[0].increase_thteshold = INCREASE_THRESHOLD_EXT_BAT;
-    current_state->result[1].decrease_thteshold = DECREASE_THRESHOLD_MAIN_VOLT;
-    current_state->result[1].increase_thteshold = INCREASE_THRESHOLD_MAIN_VOLT;
+	current_state->result[0].decrease_thteshold = DECREASE_THRESHOLD_MAIN_VOLT;
+	current_state->result[0].increase_thteshold = INCREASE_THRESHOLD_MAIN_VOLT;
+    current_state->result[1].decrease_thteshold = DECREASE_THRESHOLD_EXT_BAT;
+    current_state->result[1].increase_thteshold = INCREASE_THRESHOLD_EXT_BAT;
     current_state->result[2].decrease_thteshold = DECREASE_THRESHOLD_BACKUP;
     current_state->result[2].increase_thteshold = INCREASE_THRESHOLD_BACKUP;
     current_state->result[3].decrease_thteshold = DECREASE_THRESHOLD_BAT;
@@ -82,7 +82,6 @@ void PWR_check(struct ADC_current_state *current_state)
 // принимает значение полученное в ходе преобразования
 void ADC_processing(struct ADC_current_state *current_state, uint16_t value)
 {
-	//GPIOA->ODR ^= GPIO_Pin_0; // ОТЛАДКА!!!
 	current_state->result[current_state->current_channel - FIRST_CHANNEL].value = value;
 	if (current_state->current_channel = LAST_CHANNEL)
 	{

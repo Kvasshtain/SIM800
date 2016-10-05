@@ -15,17 +15,17 @@ const char SAVE_ALARM_T2_CMD[] = "vhod text2 ";
 const char SAVE_ACT_STATE_CMD[] = "akt sost vhod";
 
 // тексты SMS отправляемые при пренижении/превышении порогов контролируемых напряжений
-const char DEC_TH_EXT_BAT_MSG[] = "No external bat";
-const char INC_TH_EXT_BAT_MSG[] = "Yes external bat";
-const char DEC_MAIN_VOLT_MSG[]  = "No 220 V";
-const char INC_MAIN_VOLT_MSG[]  = "Yes 220 V";
-const char DEC_TH_BACKUP_MSG[]  = "No backup V";
-const char INC_TH_BACKUP_MSG[]  = "Yes backup V";
-const char DEC_TH_BAT_MSG[]     = "No internal bat";
-const char INC_TH_BAT_MSG[]     = "Yes internal bat";
+const char DEC_TH_EXT_BAT_MSG[] = "No extbat";
+const char INC_TH_EXT_BAT_MSG[] = "Yes extbat";
+const char DEC_MAIN_VOLT_MSG[]  = "No 220V";
+const char INC_MAIN_VOLT_MSG[]  = "Yes 220V";
+const char DEC_TH_BACKUP_MSG[]  = "No backup";
+const char INC_TH_BACKUP_MSG[]  = "Yes backup";
+const char DEC_TH_BAT_MSG[]     = "No intbat";
+const char INC_TH_BAT_MSG[]     = "Yes intbat";
 
-const char* POWER_DOWN_MSG[NUM_OF_ADC_CHANNEL] = {DEC_TH_EXT_BAT_MSG, DEC_MAIN_VOLT_MSG, DEC_TH_BACKUP_MSG, DEC_TH_BAT_MSG};
-const char* POWER_UP_MSG[NUM_OF_ADC_CHANNEL]   = {INC_TH_EXT_BAT_MSG, INC_MAIN_VOLT_MSG, INC_TH_BACKUP_MSG, INC_TH_BAT_MSG};
+const char* POWER_DOWN_MSG[NUM_OF_ADC_CHANNEL] = {DEC_MAIN_VOLT_MSG, DEC_TH_EXT_BAT_MSG, DEC_TH_BACKUP_MSG, DEC_TH_BAT_MSG};
+const char* POWER_UP_MSG[NUM_OF_ADC_CHANNEL]   = {INC_MAIN_VOLT_MSG, INC_TH_EXT_BAT_MSG, INC_TH_BACKUP_MSG, INC_TH_BAT_MSG};
 
 // Глобальная структура описывает текущее состояние комуникационного GSM интерфейса
 struct GSM_communication_state{
@@ -176,7 +176,7 @@ void Dig_Signals_Check(void)
 	uint8_t i;
 	uint8_t temp_str[MAX_SIZE_STRING_8];
 
-    for (i = 0; i < NUM_OF_INPUT; i++)
+	for (i = 0; i < NUM_OF_INPUT; i++)
    	{
 
     	if ((reg74hc165_current_state_num1.arr_res[i].status.bf.is_meander == 1) &&  // если на одном из входов появился меандр или одиночный импульс
@@ -191,7 +191,7 @@ void Dig_Signals_Check(void)
        		    reg74hc165_current_state_num1.arr_res[i].status.bf.meandr_already_sent = 1;   // помечаем соответсвующий вход как отправленный на рассылку
        		    // что бы SMS разослалось один раз
        		    strcat(GSM_com_state.send_SMS_text, temp_str);
-       		    strncat(GSM_com_state.send_SMS_text, "  ", 3);
+       		    strncat(GSM_com_state.send_SMS_text, ". ", 3);
    		    }
    	    }
 
@@ -207,7 +207,7 @@ void Dig_Signals_Check(void)
     		    reg74hc165_current_state_num1.arr_res[i].status.bf.const_already_sent = 1;
     		    // что бы SMS разослалось один раз
     		    strcat(GSM_com_state.send_SMS_text, temp_str);
-    		    strncat(GSM_com_state.send_SMS_text, "  ", 3);
+    		    strncat(GSM_com_state.send_SMS_text, ". ", 3);
 		    }
 	    }
     }
@@ -220,6 +220,7 @@ void Analog_Signals_Check(void)
 	uint8_t temp_str[MAX_SIZE_STRING_8];
 
 	for (i = 0; i < NUM_OF_ADC_CHANNEL; i++)
+	//for (i = 0; i < 3; i++)
 	{
 		if ((ADC_current_state_num1.result[i].analog_ch_status.is_normal) &&               // если напряжение выше порога
 		    (ADC_current_state_num1.result[i].analog_ch_status.incr_th_already_sent == 0)) // и об этом еще не разослано SMS-сообщение
@@ -229,7 +230,7 @@ void Analog_Signals_Check(void)
 				ADC_current_state_num1.result[i].analog_ch_status.incr_th_already_sent = 1;   // помечаем соответсвующий вход как отправленный на рассылку
 			    // что бы SMS разослалось один раз
 			    strcat(GSM_com_state.send_SMS_text, POWER_UP_MSG[i]);
-			    strncat(GSM_com_state.send_SMS_text, "  ", 3);
+			    strncat(GSM_com_state.send_SMS_text, ". ", 3);
 			}
 		}
 
@@ -241,7 +242,7 @@ void Analog_Signals_Check(void)
 				ADC_current_state_num1.result[i].analog_ch_status.decr_th_already_sent = 1;   // помечаем соответсвующий вход как отправленный на рассылку
 			    // что бы SMS разослалось один раз
 			    strcat(GSM_com_state.send_SMS_text, POWER_DOWN_MSG[i]);
-			    strncat(GSM_com_state.send_SMS_text, "  ", 3);
+			    strncat(GSM_com_state.send_SMS_text, ". ", 3);
 			}
 		}
 	}
@@ -283,11 +284,11 @@ void GSM_Communication_routine(void)
     // Перед формированием нового SMS  сообщения затираем старое
     GSM_com_state.send_SMS_text[0]='\0';
 
+    // проверяем входы АЦП
+    Analog_Signals_Check();
+
     // проверяем цифровые входы
     Dig_Signals_Check();
-
-    // проверяем входы АЦП
-    //Analog_Signals_Check();
 
     if (GSM_com_state.send_SMS_text[0] != '\0') // если есть что рассылать
     {

@@ -375,7 +375,8 @@ void sim800_ATplusCMGS_responce_handler_st2(struct sim800_current_state * curren
 // Обработчик ответа команды "AT+CMGS= - передачи SMS стадия 3 - прием эхо текста SMS или служебной информации
 void sim800_ATplusCMGS_responce_handler_st3(struct sim800_current_state * current_state)
 {
-    if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],current_state->send_SMS_data))
+    if (strncmp(&current_state->rec_buf[current_state->current_read_buf][0],current_state->send_SMS_data),4) // функция strstr здесь не подходит, т.е. строки могут быть длинными
+    	// и все может повиснуть на сравнении
     {
         //Обработка служебного сообщения об отправки SMS вида:
         //+CMGS: XXX (,где XXX - некий условный номер отправленного SMS)
@@ -420,7 +421,7 @@ void sim800_ATplusCMGS_responce_handler_st4(struct sim800_current_state * curren
         //int j; GPIOA->ODR &= ~GPIO_Pin_0; //for(j=0;j<0x50000;j++); GPIOA->ODR |= GPIO_Pin_0; // ОТЛАДКА!!!
         return;
     }
-    else if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR",5)==0)
+    else if (strstr(&current_state->rec_buf[current_state->current_read_buf][0],"ERROR"))
     {
         current_state->result_of_last_execution = fail;
         current_state->response_handler = NULL;
