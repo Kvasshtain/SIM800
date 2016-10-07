@@ -16,6 +16,7 @@
 #include "REG74HC165.h"
 #include "GSMcommunication.h"
 #include "adc.h"
+#include "flash.h"
 
 //uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
 //int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
@@ -378,11 +379,18 @@ void ADC1_IRQHandler(void) {
     };
 };
 
+
+uint8_t sys_timer_stop; // флаг остановки вызовов внутри системного таймера
 // Прерывание системного таймера
 void SysTick_Handler(void)
 {
-    load_data74HC165(&reg74hc165_current_state_num1); // вызываем функцию чтения входов
-    ;// вызываем функцию чтения АЦП
+	if (sys_timer_stop)
+	{
+		//GPIOA->ODR |= GPIO_Pin_0;
+		return;
+	}
+	//GPIOA->ODR &= ~GPIO_Pin_0;
+	load_data74HC165(&reg74hc165_current_state_num1); // вызываем функцию чтения входов
     GSM_Communication_routine(); // главная коммуникационная функция GSM
-    ADC_conversion_start(&ADC_current_state_num1);
+    ADC_conversion_start(&ADC_current_state_num1); // вызываем функцию чтения АЦП
 }

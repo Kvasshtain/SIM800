@@ -15,13 +15,8 @@
 #define F_TICK 		1000              // требуемая частота срабатывания прерывания системного таймера в герцах (например 1000 - 1КГц)
 #define TIMER_TICK  F_CPU/F_TICK-1
 
-//extern uint8_t rec_buf_usart1[SIZE_BUF_UART1];  // буфер для принимаемых данных UART1
-//extern int8_t rec_buf_last_usart1; // индекс последнего необработанного символа в буфере UART1
-//extern uint8_t rec_buf_usart1_overflow; //флаг переполнения приемного буфера
-
-//extern uint8_t rec_buf_usart2[SIZE_BUF_UART2];  // буфер для принимаемых данных UART2
-//extern uint8_t rec_buf_last_usart2; // индекс последнего необработанного символа в буфере UART2
-//extern uint8_t rec_buf_usart2_overflow; //флаг переполнения приемного буфера
+extern uint8_t sys_timer_stop; // признак для остановки вызовов внутри обработчика системного таймера
+// перменная требуется в случае выполнения критичесого (долгого и ресурсозатратного) кода, например записи во флеш конфигурационных пользовательских данных
 
 void SetupClock(void);  // Функция настройки тактирования
 void SetupUSART1(void); // Функция настройки UART1

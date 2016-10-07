@@ -3,9 +3,13 @@
 #include <stdlib.h>
 #include "stm32f10x.h"
 #include "flash.h"
+//#include "SIM800.h"  // КОСТЫЛЬ!!!
 #include "REG74HC165.h"
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_flash.h"
+#include "core_cmFunc.h"
+#include "phisic.h"
+//#include "GSMcommunication.h" // КОСТЫЛЬ!!!
 
 const uint8_t  std_string_prefix1[] = "PREALARM ON INPUT "; // префикс строк текстовых сообщений, записываемых по умолчанию если соответствующая строка сообщения в ячеке-строек пуста
 const uint8_t  std_string_prefix2[] = "ALARM ON INPUT "; // префикс строк текстовых сообщений, записываемых по умолчанию если соответствующая строка сообщения в ячеке-строек пуста
@@ -23,7 +27,7 @@ uint32_t FLASH_Read(uint32_t address) // чтение данных из флеш
 // принимает: 1) адрес страницы флеш памяти
 //            2) смещение байта начиная с нуля (их в одной странице 1024-е штуки)
 //            3) указатель на переменную типа uint8_t, куда будет произведена запись
-int8_t FLASH_Read_Byte(uint32_t page, uint16_t byte_shift)
+uint8_t FLASH_Read_Byte(uint32_t page, uint16_t byte_shift)
 {
     union
     {
@@ -37,7 +41,7 @@ int8_t FLASH_Read_Byte(uint32_t page, uint16_t byte_shift)
     }
 
     // читаем ячеку из флеш
-    temp_buf.i32 = FLASH_Read(page + byte_shift/4); // сохраняем данные 32-х битной ячейки флеш памяти
+    temp_buf.i32 = FLASH_Read(page + 4*(byte_shift/4)); // сохраняем данные 32-х битной ячейки флеш памяти
 
     return temp_buf.i8[byte_shift%4];
 }
@@ -373,7 +377,7 @@ uint8_t FLASH_Write_Config_Byte(uint16_t byte_shift, uint8_t config_byte)
 // принимает: 1) адрес страницы флеш памяти
 //            2) указатель на записываемый массив структур конфигурации
 //            3) размер массива
-uint8_t FLASH_Write_Page(uint32_t page, uint8_t * data_array, uint32_t size)
+uint8_t FLASH_Write_Page(uint32_t page, uint8_t * data_array, uint8_t size)
 {
     uint32_t i;
 
@@ -414,7 +418,7 @@ uint8_t FLASH_Write_Page(uint32_t page, uint8_t * data_array, uint32_t size)
 // под каждый вход требуется 1 байт в котором будет хранится битовое поле конфигурации
 // принимает: 1) указатель на записываемый массив структур конфигурации
 //            2) размер массива
-uint8_t FLASH_Write_Config_Page(uint8_t * config_array, uint32_t size)
+uint8_t FLASH_Write_Config_Page(uint8_t * config_array, uint8_t size)
 {
     if (config_array == NULL)
     {
@@ -496,3 +500,60 @@ void FLASH_Write_Default_Config(void)
     }
 }
 //***************************************************************************************************************************************
+
+// КОСТЫЛЬ (из-за переполнения ОЗУ про записи во флеш)
+void SysReset(void)
+{
+	volatile uint32_t i,j; // чуть чуть ждем
+	for(i=0;i<0x1000000;i++);
+    {
+        for(j=0;j<0x100000;j++);
+    }
+    NVIC_SystemReset(); // сбрасываем для применения изменений
+    return;
+}
+
+struct Flash_routine_st Flash_routine_state;
+//***************************************************************************************************************************************
+// Функция вызывается из main - проверяет флаги сохранения данных во флеш. И вызывает соответсвующие функции сохранения.
+void WriteDataInFlash(void)
+{
+	if (Flash_routine_state.need_write.phone)
+    {
+		sys_timer_stop = 1; // тормозим вызовы в системном таймере
+		Flash_routine_state.need_write.phone = 0;
+    	FLASH_Write_Phone_Num(Flash_routine_state.abonent_num, Flash_routine_state.phone_num, Flash_routine_state.phone_len + 1);
+    	SysReset();
+    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+    }
+
+	if (Flash_routine_state.need_write.alarm_text1)
+    {
+		sys_timer_stop = 1; // тормозим вызовы в системном таймере
+		Flash_routine_state.need_write.alarm_text1 = 0;
+		FLASH_Write_Msg_String(Flash_routine_state.msg_num, 0, Flash_routine_state.Text1, Flash_routine_state.text_len + 1);
+		SysReset();
+    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+    }
+
+	if (Flash_routine_state.need_write.alarm_text2)
+    {
+		sys_timer_stop = 1; // тормозим вызовы в системном таймере
+		Flash_routine_state.need_write.alarm_text2 = 0;
+		FLASH_Write_Msg_String(Flash_routine_state.msg_num, 1, Flash_routine_state.Text2, Flash_routine_state.text_len + 1);
+		SysReset();
+    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+    }
+
+	if (Flash_routine_state.need_write.alarm_state)
+    {
+		sys_timer_stop = 1; // тормозим вызовы в системном таймере
+		Flash_routine_state.need_write.alarm_state = 0;
+		save_config_74HC165(&reg74hc165_current_state_num1); // сохраняем конфигурацию во флеш
+		SysReset();
+    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+    }
+    return;
+}
+//***************************************************************************************************************************************
+

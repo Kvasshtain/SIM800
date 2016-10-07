@@ -11,7 +11,13 @@ struct reg74hc165_current_state reg74hc165_current_state_num1; // регистр
 // функция сохраниеия конфигурации во флеш
 void save_config_74HC165(struct reg74hc165_current_state * current_state)
 {
-	FLASH_Write_Config_Page(&(current_state->arr_res[0].config), NUM_OF_INPUT);
+	uint8_t i;
+	uint8_t tmpbuf[NUM_OF_INPUT];
+	for(i = 0; i < NUM_OF_INPUT; i++)
+	{
+		tmpbuf[i] = current_state->arr_res[i].config.i8;
+	}
+	FLASH_Write_Config_Page(tmpbuf, NUM_OF_INPUT);
 }
 
 // функция чтения конфигурации из флеш
