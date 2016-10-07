@@ -133,7 +133,10 @@ void recSMS(void)
     if (state_of_sim800_num1.result_of_last_execution == OK)
     {
         // парсим принятое SMS сообщение
-    	SMS_parse();
+        if (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_15)) // опрашиваем DIP - переключатель разрешения конфигурирования по SMS
+        {
+    	    SMS_parse();
+        }
     	GSM_com_state.status_mes_del = SMS_del_start;
     	sim800_ATplusCMGD_request(&state_of_sim800_num1, 1, 4); // все SMS прочитаны их можно удалить
     	return;
@@ -256,7 +259,7 @@ void GSM_Communication_routine(void)
     	return;
     }
 
-    GPIOA->ODR ^= GPIO_Pin_0; // светодиод индикации работы
+  	GPIOA->ODR ^= GPIO_Pin_0; // светодиод индикации работы
 
     // проверяем цифровые входы
     Dig_Signals_Check();

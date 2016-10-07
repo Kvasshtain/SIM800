@@ -62,11 +62,17 @@ void SetupGPIO(void)
 
     /** Configure pins as GPIO
     PA0     ------> GPIO_Output Сигнал пользовательский светодиод (LED)
+    PA15    ------> GPIO_Input  Сигнал Conf0 от DIP-переключателя
     */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //вход с подтяжкой к питанию
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+
     USR_LED_OFF;// тушим пользовательский светодиод в начале работы
 
     /** Configure pins as GPIO
@@ -143,7 +149,7 @@ void SetupUSART1(void)
     DMA_InitStructure.DMA_BufferSize = 1;
     DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
     DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
-   //!!!!!!!!! DMA_InitStructure.DMA_MemoryBaseAddr = TransmitBuff[0];
+    DMA_InitStructure.DMA_MemoryBaseAddr = TransmitBuff[0];
     DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
     DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
     DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;

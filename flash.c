@@ -505,7 +505,7 @@ void FLASH_Write_Default_Config(void)
 void SysReset(void)
 {
 	volatile uint32_t i,j; // чуть чуть ждем
-	for(i=0;i<0x1000000;i++);
+	for(i=0;i<0x100000;i++);
     {
         for(j=0;j<0x100000;j++);
     }
