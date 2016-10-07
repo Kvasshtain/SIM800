@@ -133,10 +133,7 @@ void recSMS(void)
     if (state_of_sim800_num1.result_of_last_execution == OK)
     {
         // парсим принятое SMS сообщение
-        if (!GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_15)) // опрашиваем DIP - переключатель разрешения конфигурирования по SMS
-        {
-    	    SMS_parse();
-        }
+        SMS_parse();
     	GSM_com_state.status_mes_del = SMS_del_start;
     	sim800_ATplusCMGD_request(&state_of_sim800_num1, 1, 4); // все SMS прочитаны их можно удалить
     	return;
@@ -487,18 +484,24 @@ void Save_range_Alarm_State(uint8_t state)
 // Функция парсинга приходящих SMS - сообщений
 void SMS_parse(void)
 {
+	//	// Пример управления светодиодом с помощью SMS
+	//	if (strstr(state_of_sim800_num1.rec_SMS_data,"LED ON"))
+	//    {
+	//        GPIOA->ODR &= ~GPIO_Pin_0;
+	//        return;
+	//    }
+	//	else if (strstr(state_of_sim800_num1.rec_SMS_data,"LED OFF"))
+	//    {
+	//        GPIOA->ODR |=  GPIO_Pin_0;
+	//        return;
+	//    }
 
-//	// Пример управления светодиодом с помощью SMS
-//	if (strstr(state_of_sim800_num1.rec_SMS_data,"LED ON"))
-//    {
-//        GPIOA->ODR &= ~GPIO_Pin_0;
-//        return;
-//    }
-//	else if (strstr(state_of_sim800_num1.rec_SMS_data,"LED OFF"))
-//    {
-//        GPIOA->ODR |=  GPIO_Pin_0;
-//        return;
-//    }
+	//*****************************************************************
+	// !!!Ниже идет парсинг конфигурационных SMS, выше пользовательских
+	if (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_15)) // опрашиваем DIP - переключатель разрешения конфигурирования по SMS.
+	{
+        return; // если DIP - перключатель в нижнем положении дальнейший парсинг не происходит
+	}
 
 	if (stristr(state_of_sim800_num1.rec_SMS_data, SAVE_TEL_CMD))
 	// если пользователь хочет ввести новый номер целевого абонента
