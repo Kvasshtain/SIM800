@@ -38,7 +38,7 @@ int main(void)
     init_74HC165(&reg74hc165_current_state_num1);
 
     // инициализация SIM800
-    sim800_init(&state_of_sim800_num1, send_str_uart2, 2, 6239); // Первый SIM800 сидит на UART2
+    while (sim800_init(&state_of_sim800_num1, send_str_uart2, 2, 6239)) {}; // Первый SIM800 сидит на UART2
 
     // запуск системного таймера надо производить только после настройки SIM800
     Init_SysTick(); // разрешаем работу системного таймера
@@ -270,14 +270,15 @@ int main(void)
     //
     //    sim800_ATplusCUSD_request(&state_of_sim800_num1, MTS_balance_request); // проверка баланса SIM карты
 
-    volatile int i,j;
+    //volatile int i,j;
     while(1)
     {
-       for(i=0;i<0x100000;i++);
-       {
-          for(j=0;j<0x10;j++);
-       }
-       GPIOA->ODR ^= GPIO_Pin_0;
+    	WriteDataInFlash(); // вызываем функцию записи во флешь новых данных, если таковые есть
+//       for(i=0;i<0x100000;i++);
+//       {
+//          for(j=0;j<0x10;j++);
+//       }
+//       GPIOA->ODR ^= GPIO_Pin_0;
 
 
 

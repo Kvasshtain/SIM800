@@ -3,9 +3,13 @@
 #include <stdlib.h>
 #include "stm32f10x.h"
 #include "flash.h"
+//#include "SIM800.h"  // КОСТЫЛЬ!!!
 #include "REG74HC165.h"
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_flash.h"
+#include "core_cmFunc.h"
+#include "phisic.h"
+//#include "GSMcommunication.h" // КОСТЫЛЬ!!!
 
 const uint8_t  std_string_prefix1[] = "PREALARM ON INPUT "; // префикс строк текстовых сообщений, записываемых по умолчанию если соответствующая строка сообщения в ячеке-строек пуста
 const uint8_t  std_string_prefix2[] = "ALARM ON INPUT "; // префикс строк текстовых сообщений, записываемых по умолчанию если соответствующая строка сообщения в ячеке-строек пуста
@@ -496,3 +500,58 @@ void FLASH_Write_Default_Config(void)
     }
 }
 //***************************************************************************************************************************************
+
+
+struct Flash_routine_st Flash_routine_state;
+//***************************************************************************************************************************************
+// Функция вызывается из main - проверяет флаги сохранения данных во флеш. И вызывает соответсвующие функции сохранения.
+void WriteDataInFlash(void)
+{
+	if (Flash_routine_state.need_write.phone)
+    {
+		sys_timer_stop = 1; // тормозим вызовы в системном таймере
+		Flash_routine_state.need_write.phone = 0;
+    	FLASH_Write_Phone_Num(Flash_routine_state.abonent_num, Flash_routine_state.phone_num, Flash_routine_state.phone_len + 1);
+    	//GSM_Com_Init(&state_of_sim800_num1); // !!!!! КОСТЫЛЬ
+    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+    	//NVIC_SystemReset(); // сбрасываем для применения изменений
+    	return;
+    }
+
+	if (Flash_routine_state.need_write.alarm_text1)
+    {
+		sys_timer_stop = 1; // тормозим вызовы в системном таймере
+		Flash_routine_state.need_write.alarm_text1 = 0;
+		FLASH_Write_Msg_String(Flash_routine_state.msg_num, 0, Flash_routine_state.Text1, Flash_routine_state.text_len + 1);
+    	//GSM_Com_Init(&state_of_sim800_num1); // !!!!! КОСТЫЛЬ
+    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+    	//NVIC_SystemReset(); // сбрасываем для применения изменений
+    	return;
+    }
+
+	if (Flash_routine_state.need_write.alarm_text2)
+    {
+		sys_timer_stop = 1; // тормозим вызовы в системном таймере
+		Flash_routine_state.need_write.alarm_text2 = 0;
+		FLASH_Write_Msg_String(Flash_routine_state.msg_num, 1, Flash_routine_state.Text2, Flash_routine_state.text_len + 1);
+    	//GSM_Com_Init(&state_of_sim800_num1); // !!!!! КОСТЫЛЬ
+    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+    	//NVIC_SystemReset(); // сбрасываем для применения изменений
+    	return;
+    }
+
+	if (Flash_routine_state.need_write.alarm_state)
+    {
+		sys_timer_stop = 1; // тормозим вызовы в системном таймере
+		Flash_routine_state.need_write.alarm_state = 0;
+		save_config_74HC165(&reg74hc165_current_state_num1); // сохраняем конфигурацию во флеш
+    	//GSM_Com_Init(&state_of_sim800_num1); // !!!!! КОСТЫЛЬ
+    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+    	//NVIC_SystemReset(); // сбрасываем для применения изменений
+    	return;
+    }
+
+    return;
+}
+//***************************************************************************************************************************************
+

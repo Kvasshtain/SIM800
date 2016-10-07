@@ -3,6 +3,9 @@
 #ifndef __GSM_COM_H_
 #define __GSM_COM_H_
 
+#include "SIM800.h"
+#include "flash.h"
+
 #define busy 1
 #define free 0
 
@@ -20,21 +23,28 @@
 #define SMS_del_stop    0 // признак конца удаления SMS
 
 
-#define MAX_NUM_OF_FAIL 5 // максимальное число повторных попыток при неудачном исходе запроса в GSM модуль
+#define MAX_NUM_OF_FAIL 3 // максимальное число повторных попыток при неудачном исходе запроса в GSM модуль
 
 #define NUM_OF_ABONENTS 6 // NUM_OF_ABONENTS должно быть меньше MAX_NUM_OF_ABONENTS = 32
 
-//#define SAVE_TEL_CMD_TXT = "tel";
-//#define SAVE_TEL_CMD_LENG (sizeof(SAVE_TEL_CMD)-1)
-//
-//#define SAVE_ALARM_T1_CMD_TXT = "vhod text1 ";
-//#define SAVE_ALARM_T1_CMD_LENG (sizeof(SAVE_ALARM_T1_CMD)-1)
-//
-//#define SAVE_ALARM_T2_CMD_TXT = "vhod text2 ";
-//#define SAVE_ALARM_T2_CMD_LENG (sizeof(SAVE_ALARM_T2_CMD)-1)
-//
-//#define SAVE_ACT_STATE_CMD_TXT = "akt sost vhod";
-//#define SAVE_ACT_STATE_CMD_LENG (sizeof(SAVE_ACT_STATE_CMD)-1)
+// Глобальная структура описывает текущее состояние комуникационного GSM интерфейса
+struct GSM_communication_state{
+    uint8_t Status_of_mailing;                 // статус рассылки SMS сообщений: занят (busy)- рассылка сообщения идет,
+    //                  свободен (free) - рассылка сообщения закончена,
+    uint8_t Status_of_readSMS;                 // статус чтения SMS сообщений: занят (busy)- чтение сообщения идет,
+    //                  свободен (free) - чтение сообщения закончена,
+    uint8_t status_mes_send;                   // флаг статуса отправки SMS может принимать SMS_send_stop = 0 или SMS_send_start = 1
+    uint8_t status_mes_rec;                    // флаг статуса приема SMS может принимать SMS_rec_stop = 0 или SMS_rec_start = 1
+    uint8_t status_mes_del;                    // флаг статуса удаления SMS может принимать SMS_del_stop = 0 или SMS_del_start = 1
+    uint8_t current_abonent;                   // тикущий номер абонента
+    uint8_t max_num_of_abonent;                // максимальное число абонентов для рассылки
+    uint8_t send_SMS_text[SEND_SMS_DATA_SIZE]; // текущий текс SMS для отправки
+    //uint8_t rec_SMS_text[REC_SMS_DATA_SIZE];   // текущий текс принятого SMS //!!! Данный буфер пока не нужен, вполне хватит приемного буфера драйвера SIM800 (или другого модуля)
+    uint8_t phone_num[MAX_SIZE_STR_PHONE_8];   // номер телефона текущего абонента
+    volatile uint8_t number_of_failures;                // счетчик неудачных попыток (используется для защиты от зацикливания)
+};
+
+extern struct GSM_communication_state GSM_com_state; // структура хранящая текущее состояние коммуникационного GSM итерфеса
 
 void GSM_Com_Init(struct sim800_current_state * current_state); // функция инициализации коммуникационного интерфейса
 

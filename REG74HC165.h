@@ -111,6 +111,7 @@ struct reg74hc165_current_state{
 
 extern struct reg74hc165_current_state reg74hc165_current_state_num1; // регистровых каскадов может быть несколько
 
+void save_config_74HC165(struct reg74hc165_current_state * current_state); // функция сохраниеия конфигурации во флеш
 
 void init_74HC165(struct reg74hc165_current_state * current_state); // Функция инициализации опроса регистра/регистров 74HC165
 
