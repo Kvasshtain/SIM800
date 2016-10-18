@@ -12,17 +12,17 @@
 
 // пороги при снижении и увеличении проверямых напряжений при которых будут рассылаться соответствующие сообщения
 // Для внешней батареи
-#define DECREASE_THRESHOLD_EXT_BAT         2600 // порог уменьшения (меньший)
-#define INCREASE_THRESHOLD_EXT_BAT         3072 // порог увеличения (больший)
+#define DECREASE_THRESHOLD_EXT_BAT         1600 // порог уменьшения (меньший)
+#define INCREASE_THRESHOLD_EXT_BAT         2600 // порог увеличения (больший)
 // Для сетевого напряжения
-#define DECREASE_THRESHOLD_MAIN_VOLT       2600
-#define INCREASE_THRESHOLD_MAIN_VOLT       3072
+#define DECREASE_THRESHOLD_MAIN_VOLT       1600
+#define INCREASE_THRESHOLD_MAIN_VOLT       2600
 // Для внешнего резерва
-#define DECREASE_THRESHOLD_BACKUP          2600
-#define INCREASE_THRESHOLD_BACKUP          3072
+#define DECREASE_THRESHOLD_BACKUP          1600
+#define INCREASE_THRESHOLD_BACKUP          2600
 // Для внутренней батареи
-#define DECREASE_THRESHOLD_BAT             2600
-#define INCREASE_THRESHOLD_BAT             3072
+#define DECREASE_THRESHOLD_BAT             1600
+#define INCREASE_THRESHOLD_BAT             2600
 
 // БИТОВОЕ ПОЛЕ СТАТУСА ОДНОГО АНАЛОГОВОГО КАНАЛА
 struct analog_ch_status_bf

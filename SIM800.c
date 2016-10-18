@@ -376,7 +376,7 @@ void sim800_ATplusCMGS_responce_handler_st2(struct sim800_current_state * curren
 void sim800_ATplusCMGS_responce_handler_st3(struct sim800_current_state * current_state)
 {
     if (strncmp(&current_state->rec_buf[current_state->current_read_buf][0],current_state->send_SMS_data),4) // функция strstr здесь не подходит, т.е. строки могут быть длинными
-    	// и все может повиснуть на сравнении
+        // и все может повиснуть на сравнении
     {
         //Обработка служебного сообщения об отправки SMS вида:
         //+CMGS: XXX (,где XXX - некий условный номер отправленного SMS)
@@ -675,10 +675,10 @@ void sim800_ATplusCMGR_responce_handler_st2(struct sim800_current_state * curren
 void sim800_ATplusCMGR_responce_handler_st3(struct sim800_current_state * current_state)
 {
     uint32_t length;
-	current_state->response_handler = sim800_ATplusCMGR_responce_handler_st4;
-	length = strlen(&current_state->rec_buf[current_state->current_read_buf][0]);
-	// принятое SMS сообщение содержит в конце два последних символов \r\n, что-бы затереть их мы вместо \r пишем \0 и копируем length - 1 символов
-	current_state->rec_buf[current_state->current_read_buf][length - 2] = '\0';
+    current_state->response_handler = sim800_ATplusCMGR_responce_handler_st4;
+    length = strlen(&current_state->rec_buf[current_state->current_read_buf][0]);
+    // принятое SMS сообщение содержит в конце два последних символов \r\n, что-бы затереть их мы вместо \r пишем \0 и копируем length - 1 символов
+    current_state->rec_buf[current_state->current_read_buf][length - 2] = '\0';
     memcpy(current_state->rec_SMS_data, &current_state->rec_buf[current_state->current_read_buf][0], length - 1);
     // копируем принятое SMS сообщение без последних двух символов (которые \r\n)
     return;
@@ -1401,10 +1401,10 @@ void unexpec_message_parse(struct sim800_current_state *current_state)
     if (stristr(&current_state->rec_buf[current_state->current_read_buf][0],"+CMTI:")) // Пришло СМС сообщение (нпример "+CMTI: "SM",12")
     {
         if (strncasecmp(&current_state->rec_buf[current_state->current_read_buf][10],"SM",2)==0)
-        //if (stristr(&current_state->rec_buf[current_state->current_read_buf][7],"SM"))
+            //if (stristr(&current_state->rec_buf[current_state->current_read_buf][7],"SM"))
         {
-        	//current_state->num_of_sms++;
-        	current_state->num_of_sms = atoi(&current_state->rec_buf[current_state->current_read_buf][14]);
+            //current_state->num_of_sms++;
+            current_state->num_of_sms = atoi(&current_state->rec_buf[current_state->current_read_buf][14]);
         }
         return;
     }

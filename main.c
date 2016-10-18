@@ -5,6 +5,7 @@
 #include "SIM800.h"
 #include "flash.h"
 #include "REG74HC165.h"
+#include "adc.h"
 #include "GSMcommunication.h"
 
 #include "stm32f10x.h"
@@ -37,6 +38,8 @@ int main(void)
     // инициализация каскада регистров 74HC165
     init_74HC165(&reg74hc165_current_state_num1);
 
+    ADC_init_routine(&ADC_current_state_num1);
+
     // инициализация SIM800
     while (sim800_init(&state_of_sim800_num1, send_str_uart2, 2, 6239)) {}; // Первый SIM800 сидит на UART2
 
@@ -45,6 +48,6 @@ int main(void)
 
     while(1)
     {
-    	WriteDataInFlash(); // вызываем функцию записи во флешь новых данных, если таковые есть
+        WriteDataInFlash(); // вызываем функцию записи во флешь новых данных, если таковые есть
     }
 }

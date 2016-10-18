@@ -73,7 +73,7 @@ uint8_t FLASH_Read_String(uint32_t page, uint32_t shift, uint8_t * data_string, 
 
     if ((shift + size) > PAGE_SIZE_8)
     {
-    	return 3;
+        return 3;
     }
 
     if (size > PAGE_SIZE_8) // если размер строки окажется больше размера страницы обрезаем ее до размера страницы
@@ -247,7 +247,7 @@ uint8_t FLASH_Write_String(uint32_t page, uint32_t shift, uint8_t * data_string,
 
     if ((shift + size) > PAGE_SIZE_8)
     {
-    	return 3;
+        return 3;
     }
 
     if (size > PAGE_SIZE_8) // если размер строки окажется больше размера страницы
@@ -454,6 +454,8 @@ void FLASH_Write_Default_String(void)
         return;
     }
 
+    // Для случая простой нумерации цифровых входов
+    /*
     for (i=0; i<NUM_OF_STR_PAGE; i++) // перебераем все страницы флеш отведенные под хранение текстовых сообщений
     {
         for (j=0; j < NUM_OF_CELL_STR; j++) // перебираем все строки-ячейки в этих cтраницах
@@ -478,6 +480,66 @@ void FLASH_Write_Default_String(void)
             }
         }
     }
+    */
+
+    //Под так называемую 5-ую систему
+    FLASH_Write_Msg_String(0, 0, "Porog 2 CH4", 12);
+    FLASH_Write_Msg_String(0, 1, "Porog 1 CH4", 12);
+    FLASH_Write_Msg_String(1, 0, "Neispravnost CH4", 17);
+    FLASH_Write_Msg_String(1, 1, "Neispravnost CH4", 17);
+
+    FLASH_Write_Msg_String(2, 0, "Porog 2 CO", 11);
+    FLASH_Write_Msg_String(2, 1, "Porog 1 CO", 11);
+    FLASH_Write_Msg_String(3, 0, "Neispravnost CO", 16);
+    FLASH_Write_Msg_String(3, 1, "Neispravnost CO", 16);
+
+    FLASH_Write_Msg_String(4, 0, "Klapan zakrut", 14);
+    FLASH_Write_Msg_String(4, 1, "Klapan zakrut", 14);
+
+    FLASH_Write_Msg_String(5, 0, "Vzlom", 6);
+    FLASH_Write_Msg_String(5, 1, "Vzlom", 6);
+
+    FLASH_Write_Msg_String(6, 0, "Pozhar", 7);
+    FLASH_Write_Msg_String(6, 1, "Pozhar", 7);
+
+    // Сигналы аварий
+    FLASH_Write_Msg_String(7, 0, "Vh Avar 1", 10);
+    FLASH_Write_Msg_String(7, 1, "Vh Avar 1", 10);
+    FLASH_Write_Msg_String(8, 0, "Vh Avar 2", 10);
+    FLASH_Write_Msg_String(8, 1, "Vh Avar 2", 10);
+    FLASH_Write_Msg_String(9, 0, "Vh Avar 3", 10);
+    FLASH_Write_Msg_String(9, 1, "Vh Avar 3", 10);
+    FLASH_Write_Msg_String(10, 0, "Vh Avar 4", 10);
+    FLASH_Write_Msg_String(10, 1, "Vh Avar 4", 10);
+    FLASH_Write_Msg_String(11, 0, "Vh Avar 5", 10);
+    FLASH_Write_Msg_String(11, 1, "Vh Avar 5", 10);
+    FLASH_Write_Msg_String(12, 0, "Vh Avar 6", 10);
+    FLASH_Write_Msg_String(12, 1, "Vh Avar 6", 10);
+    FLASH_Write_Msg_String(13, 0, "Vh Avar 7", 10);
+    FLASH_Write_Msg_String(13, 1, "Vh Avar 7", 10);
+    FLASH_Write_Msg_String(14, 0, "Vh Avar 8", 10);
+    FLASH_Write_Msg_String(14, 1, "Vh Avar 8", 10);
+    FLASH_Write_Msg_String(15, 0, "Vh Avar 9", 10);
+    FLASH_Write_Msg_String(15, 1, "Vh Avar 9", 10);
+    FLASH_Write_Msg_String(16, 0, "Vh Avar 10", 11);
+    FLASH_Write_Msg_String(16, 1, "Vh Avar 10", 11);
+    FLASH_Write_Msg_String(17, 0, "Vh Avar 11", 11);
+    FLASH_Write_Msg_String(17, 1, "Vh Avar 11", 11);
+    FLASH_Write_Msg_String(18, 0, "Vh Avar 12", 11);
+    FLASH_Write_Msg_String(18, 1, "Vh Avar 12", 11);
+    FLASH_Write_Msg_String(19, 0, "Vh Avar 13", 11);
+    FLASH_Write_Msg_String(19, 1, "Vh Avar 13", 11);
+    FLASH_Write_Msg_String(20, 0, "Vh Avar 14", 11);
+    FLASH_Write_Msg_String(20, 1, "Vh Avar 14", 11);
+    FLASH_Write_Msg_String(21, 0, "Vh Avar 15", 11);
+    FLASH_Write_Msg_String(21, 1, "Vh Avar 15", 11);
+    FLASH_Write_Msg_String(22, 0, "Vh Avar 16", 11);
+    FLASH_Write_Msg_String(22, 1, "Vh Avar 16", 11);
+
+    FLASH_Write_Msg_String(23, 0, "Neispravnost SIST", 18);
+    FLASH_Write_Msg_String(23, 1, "Neispravnost SIST", 18);
+
+    SysReset();
 }
 //***************************************************************************************************************************************
 
@@ -496,16 +558,24 @@ void FLASH_Write_Default_Config(void)
 
     for (i=0; i<NUM_OF_INPUT; i++) // перебераем столько ячеек страницы конфигурации цифровых входов во флеш сколько имеем входов
     {
-        FLASH_Write_Config_Byte(i, 0); // все по нулям
+        FLASH_Write_Config_Byte(i, 0); // все остальное по нулям
+        //    	if ((i == 1)||(i == 3)||(i == 23))
+        //        {
+        //        	FLASH_Write_Config_Byte(i, 2); // вход 2, 4 и 24 - активное состояние +питания
+        //        }
+        //        else
+        //        {
+        //        	FLASH_Write_Config_Byte(i, 0); // все остальное по нулям
+        //		}
     }
 }
 //***************************************************************************************************************************************
 
-// КОСТЫЛЬ (из-за переполнения ОЗУ про записи во флеш)
+// КОСТЫЛЬ (из-за переполнения ОЗУ при записи во флеш)
 void SysReset(void)
 {
-	volatile uint32_t i,j; // чуть чуть ждем
-	for(i=0;i<0x100000;i++);
+    volatile uint32_t i,j; // чуть чуть ждем
+    for(i=0;i<0x100000;i++);
     {
         for(j=0;j<0x100000;j++);
     }
@@ -518,40 +588,40 @@ struct Flash_routine_st Flash_routine_state;
 // Функция вызывается из main - проверяет флаги сохранения данных во флеш. И вызывает соответсвующие функции сохранения.
 void WriteDataInFlash(void)
 {
-	if (Flash_routine_state.need_write.phone)
+    if (Flash_routine_state.need_write.phone)
     {
-		sys_timer_stop = 1; // тормозим вызовы в системном таймере
-		Flash_routine_state.need_write.phone = 0;
-    	FLASH_Write_Phone_Num(Flash_routine_state.abonent_num, Flash_routine_state.phone_num, Flash_routine_state.phone_len + 1);
-    	SysReset();
-    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+        sys_timer_stop = 1; // тормозим вызовы в системном таймере
+        Flash_routine_state.need_write.phone = 0;
+        FLASH_Write_Phone_Num(Flash_routine_state.abonent_num, Flash_routine_state.phone_num, Flash_routine_state.phone_len + 1);
+        SysReset();
+        sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
     }
 
-	if (Flash_routine_state.need_write.alarm_text1)
+    if (Flash_routine_state.need_write.alarm_text1)
     {
-		sys_timer_stop = 1; // тормозим вызовы в системном таймере
-		Flash_routine_state.need_write.alarm_text1 = 0;
-		FLASH_Write_Msg_String(Flash_routine_state.msg_num, 0, Flash_routine_state.Text1, Flash_routine_state.text_len + 1);
-		SysReset();
-    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+        sys_timer_stop = 1; // тормозим вызовы в системном таймере
+        Flash_routine_state.need_write.alarm_text1 = 0;
+        FLASH_Write_Msg_String(Flash_routine_state.msg_num, 0, Flash_routine_state.Text1, Flash_routine_state.text_len + 1);
+        SysReset();
+        sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
     }
 
-	if (Flash_routine_state.need_write.alarm_text2)
+    if (Flash_routine_state.need_write.alarm_text2)
     {
-		sys_timer_stop = 1; // тормозим вызовы в системном таймере
-		Flash_routine_state.need_write.alarm_text2 = 0;
-		FLASH_Write_Msg_String(Flash_routine_state.msg_num, 1, Flash_routine_state.Text2, Flash_routine_state.text_len + 1);
-		SysReset();
-    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+        sys_timer_stop = 1; // тормозим вызовы в системном таймере
+        Flash_routine_state.need_write.alarm_text2 = 0;
+        FLASH_Write_Msg_String(Flash_routine_state.msg_num, 1, Flash_routine_state.Text2, Flash_routine_state.text_len + 1);
+        SysReset();
+        sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
     }
 
-	if (Flash_routine_state.need_write.alarm_state)
+    if (Flash_routine_state.need_write.alarm_state)
     {
-		sys_timer_stop = 1; // тормозим вызовы в системном таймере
-		Flash_routine_state.need_write.alarm_state = 0;
-		save_config_74HC165(&reg74hc165_current_state_num1); // сохраняем конфигурацию во флеш
-		SysReset();
-    	sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
+        sys_timer_stop = 1; // тормозим вызовы в системном таймере
+        Flash_routine_state.need_write.alarm_state = 0;
+        save_config_74HC165(&reg74hc165_current_state_num1); // сохраняем конфигурацию во флеш
+        SysReset();
+        sys_timer_stop = 0; // после записи запускаем вызовы в системном таймере
     }
     return;
 }
