@@ -58,7 +58,7 @@ void init_74HC165(struct reg74hc165_current_state * current_state)
 // Определяет: импульс - это меандр
 void meander_recognition(struct reg74hc165_current_state * current_state, int input_num)
 {
-    if ((current_state->arr_res[input_num].pulse_duration > NOICE_DURATION) /*&& (current_state->arr_res[input_num].pulse_duration < THRESHOLD_DURATION)*/)
+    if ((current_state->arr_res[input_num].pulse_duration > NOICE_DURATION) && (current_state->arr_res[input_num].pulse_duration < THRESHOLD_DURATION))
     {
         current_state->arr_res[input_num].status.bf.is_meander = 1;
     }
@@ -77,7 +77,12 @@ void const_sig_recognition(struct reg74hc165_current_state * current_state, int 
 //             или импульс - это постоянный уровень, который держится более 1 секунды
 void vanishing_recognition(struct reg74hc165_current_state * current_state, int input_num)
 {
-    if ((current_state->arr_res[input_num].pause_duration > THRESHOLD_DURATION))
+    if ((current_state->arr_res[input_num].pause_duration >= THRESHOLD_DURATION))
+    {
+        current_state->arr_res[input_num].status.bf.meandr_already_sent = 0;
+        current_state->arr_res[input_num].status.bf.is_meander = 0;
+    }
+    if ((current_state->arr_res[input_num].pause_duration >= NOICE_DURATION) && (current_state->arr_res[input_num].status.bf.is_const_sig == 1))
     {
         current_state->arr_res[input_num].status.bf.const_already_sent = 0;
         current_state->arr_res[input_num].status.bf.meandr_already_sent = 0;
@@ -95,7 +100,10 @@ void pulse_processing(struct reg74hc165_current_state * current_state)
     {
         if (current_state->arr_res[i].status.bf.cur_log_state)
         {
-            current_state->arr_res[i].pulse_duration ++;
+            if (current_state->arr_res[i].pulse_duration <= THRESHOLD_DURATION + 1) // смысл инкрементировать длительность импульса больше чем THRESHOLD_DURATION нет
+            {
+        	    current_state->arr_res[i].pulse_duration ++;
+            }
             current_state->arr_res[i].pause_duration = 0;
             const_sig_recognition(current_state, i);
         }
