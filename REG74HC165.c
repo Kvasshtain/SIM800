@@ -102,7 +102,7 @@ void pulse_processing(struct reg74hc165_current_state * current_state)
         {
             if (current_state->arr_res[i].pulse_duration <= THRESHOLD_DURATION + 1) // смысл инкрементировать длительность импульса больше чем THRESHOLD_DURATION нет
             {
-        	    current_state->arr_res[i].pulse_duration ++;
+                current_state->arr_res[i].pulse_duration ++;
             }
             current_state->arr_res[i].pause_duration = 0;
             const_sig_recognition(current_state, i);

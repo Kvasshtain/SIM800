@@ -1185,12 +1185,12 @@ uint8_t sim800_init(struct sim800_current_state * current_state, void (*send_uar
         {
             return ATfail;
         }
-    };
+    }
     count = 0;
     if (current_state->result_of_last_execution == fail)
     {
         return ATfail;
-    };
+    }
     //----------------------
 
     //----------------------

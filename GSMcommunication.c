@@ -11,6 +11,7 @@
 #include "GSMcommunication.h"
 
 // префиксы строк входящих SMS содержащих команды
+const char ECHO[] = "echo";
 const char SAVE_TEL_CMD[] = "tel";
 const char SAVE_ALARM_T1_CMD[] = "vhod text1 ";
 const char SAVE_ALARM_T2_CMD[] = "vhod text2 ";
@@ -225,6 +226,41 @@ void Analog_Signals_Check(void)
     }
 }
 
+// периодическая проверка SIM800 на жизнеспособность
+void Is_SIM800_alive(void)
+{
+    uint32_t count = 0;
+    uint8_t result = OK;
+    static uint16_t dalay_count;
+
+    dalay_count ++;
+
+    if (dalay_count <= 1000)
+    {
+        return;
+    }
+
+    dalay_count = 0;
+
+    sim800_AT_request(&state_of_sim800_num1); // пробуем отправить тестовую команду
+    while (state_of_sim800_num1.communication_stage != proc_completed) // ждем пока не ответит OK
+    {
+        count ++;
+        if (count == REQ_TIMEOUT)
+        {
+            result = ATfail;
+        }
+    }
+    if (state_of_sim800_num1.result_of_last_execution == fail)
+    {
+        result = ATfail;
+    }
+    if (result == ATfail)
+    {
+        SysReset(); // если модуль не отвечает пробуем перезагрузится
+    }
+}
+
 // главная коммуникационная функция GSM
 // может вызываться из обработчика прерывания (например таймера)
 // или из одного из потоков операционной системы (например FreeRTOS, но не проверял пока)
@@ -264,6 +300,9 @@ void GSM_Communication_routine(void)
     // проверяем входы АЦП
     Analog_Signals_Check();
 
+    // SIM800 живой?
+    Is_SIM800_alive();
+
     if (GSM_com_state.send_SMS_text[0] != '\0') // если есть что рассылать
     {
         GSM_com_state.Status_of_mailing = busy;
@@ -275,6 +314,12 @@ void GSM_Communication_routine(void)
         GSM_com_state.Status_of_readSMS = busy;
         return;
     }
+}
+
+// функция отправки эхо (что GSM извещатель находится в рабочем состоянии)
+void Echo(void)
+{
+    strcat(GSM_com_state.send_SMS_text, ECHO); // отправляем в ответ эхо
 }
 
 // функция поиска в строке текста SMS телефонного номера абонета и его запись во флеш (телефонную книгу)
@@ -495,6 +540,14 @@ void SMS_parse(void)
     //        GPIOA->ODR |=  GPIO_Pin_0;
     //        return;
     //    }
+
+    if (stristr(state_of_sim800_num1.rec_SMS_data, ECHO))
+        // если пользователь хочет ввести новый номер целевого абонента
+    {
+        // SMS с текстом: "telN:telnumber", где N - порядковый номер абонента (1,2,3,...), telnumber - его телефон
+        Echo();
+        return;
+    }
 
     //*****************************************************************
     // !!!Ниже идет парсинг конфигурационных SMS, выше пользовательских

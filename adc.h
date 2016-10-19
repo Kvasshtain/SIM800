@@ -21,8 +21,8 @@
 #define DECREASE_THRESHOLD_BACKUP          1600
 #define INCREASE_THRESHOLD_BACKUP          2600
 // Для внутренней батареи
-#define DECREASE_THRESHOLD_BAT             1600
-#define INCREASE_THRESHOLD_BAT             2600
+#define DECREASE_THRESHOLD_BAT             2215
+#define INCREASE_THRESHOLD_BAT             2325
 
 // БИТОВОЕ ПОЛЕ СТАТУСА ОДНОГО АНАЛОГОВОГО КАНАЛА
 struct analog_ch_status_bf
