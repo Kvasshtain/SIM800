@@ -12,6 +12,7 @@
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_usart.h"
+#include "stm32f10x_flash.h"
 #include <stdio.h>
 
 //**********************************************************************************************************
@@ -40,8 +41,20 @@ int main(void)
 
     ADC_init_routine(&ADC_current_state_num1);
 
+    uint8_t current_SIM = 1;
+
     // инициализация SIM800
-    while (sim800_init(&state_of_sim800_num1, send_str_uart2, 2, 6239)) {}; // Первый SIM800 сидит на UART2
+    while (sim800_init(&state_of_sim800_num1, send_str_uart2, current_SIM, 0)) // Первый SIM800 сидит на UART2
+    {
+    	if (current_SIM == 1)
+    	{
+    	    current_SIM = 2; // Пробуем завестись на одной из двух SIM-карт
+    	}
+    	else
+    	{
+		    current_SIM = 1;
+		}
+    };
 
     // запуск системного таймера надо производить только после настройки SIM800
     Init_SysTick(); // разрешаем работу системного таймера

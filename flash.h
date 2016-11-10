@@ -117,4 +117,6 @@ uint8_t FLASH_Write_Page(uint32_t page, uint8_t * data_array, uint8_t size); // 
 
 void WriteDataInFlash(void); // Функция вызывается из обработчика прерывания системного таймера
 
+void SysReset(void); // КОСТЫЛЬ (из-за переполнения ОЗУ при записи во флеш)
+
 #endif /* __FLASH_H */

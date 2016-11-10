@@ -88,7 +88,7 @@ uint8_t FLASH_Read_String(uint32_t page, uint32_t shift, uint8_t * data_string, 
         temp_buf[i] = FLASH_Read(page + shift + 4*i); // сохраняем данные страницы флеш памяти
     }
 
-    strlcpy(data_string, temp_buf, size);
+    strlcpy((char*)data_string, (char*)temp_buf, size);
     return 0;
 
 }
@@ -440,14 +440,14 @@ uint8_t FLASH_Write_Config_Page(uint8_t * config_array, uint8_t size)
 // (первый символл соответсвующей строки-ячейки равен 0xFFFFFFFF) заполняет эти страницы дефолтными строками
 void FLASH_Write_Default_String(void)
 {
-    uint8_t i = 0; // перебор страниц флеш
-    uint8_t j = 0; // перебор строк ячеек внутри страницы
-    uint8_t k = 0; // счетчик записываемых 32-х битных слов
-    uint8_t m = 1; // счетчик записаных строк
-    uint32_t write_str[MAX_SIZE_STRING_32];
-    uint8_t string_of_num[4]; // строка содержащая номер входного сигнала (маловероятно, что число превысит 3-и порядка)
-    uint8_t string_prefix_size1 = strlen(std_string_prefix1);
-    uint8_t string_prefix_size2 = strlen(std_string_prefix2);
+//    uint8_t i = 0; // перебор страниц флеш
+//    uint8_t j = 0; // перебор строк ячеек внутри страницы
+//    uint8_t k = 0; // счетчик записываемых 32-х битных слов
+//    uint8_t m = 1; // счетчик записаных строк
+//    uint32_t write_str[MAX_SIZE_STRING_32];
+//    uint8_t string_of_num[4]; // строка содержащая номер входного сигнала (маловероятно, что число превысит 3-и порядка)
+//    uint8_t string_prefix_size1 = strlen(std_string_prefix1);
+//    uint8_t string_prefix_size2 = strlen(std_string_prefix2);
 
     if (0xFFFFFFFF != FLASH_Read(DATA_Pages[0])) // стертая флешь заполняется 0xFFFFFFFF
     {
@@ -483,61 +483,61 @@ void FLASH_Write_Default_String(void)
     */
 
     //Под так называемую 5-ую систему
-    FLASH_Write_Msg_String(0, 0, "Porog 2 CH4", 12);
-    FLASH_Write_Msg_String(0, 1, "Porog 1 CH4", 12);
-    FLASH_Write_Msg_String(1, 0, "Neispravnost CH4", 17);
-    FLASH_Write_Msg_String(1, 1, "Neispravnost CH4", 17);
+    FLASH_Write_Msg_String(0, 0, (uint8_t *)"Porog 2 CH4", 12);
+    FLASH_Write_Msg_String(0, 1, (uint8_t *)"Porog 1 CH4", 12);
+    FLASH_Write_Msg_String(1, 0, (uint8_t *)"Neispravnost CH4", 17);
+    FLASH_Write_Msg_String(1, 1, (uint8_t *)"Neispravnost CH4", 17);
 
-    FLASH_Write_Msg_String(2, 0, "Porog 2 CO", 11);
-    FLASH_Write_Msg_String(2, 1, "Porog 1 CO", 11);
-    FLASH_Write_Msg_String(3, 0, "Neispravnost CO", 16);
-    FLASH_Write_Msg_String(3, 1, "Neispravnost CO", 16);
+    FLASH_Write_Msg_String(2, 0, (uint8_t *)"Porog 2 CO", 11);
+    FLASH_Write_Msg_String(2, 1, (uint8_t *)"Porog 1 CO", 11);
+    FLASH_Write_Msg_String(3, 0, (uint8_t *)"Neispravnost CO", 16);
+    FLASH_Write_Msg_String(3, 1, (uint8_t *)"Neispravnost CO", 16);
 
-    FLASH_Write_Msg_String(4, 0, "Klapan zakrut", 14);
-    FLASH_Write_Msg_String(4, 1, "Klapan zakrut", 14);
+    FLASH_Write_Msg_String(4, 0, (uint8_t *)"Klapan zakrut", 14);
+    FLASH_Write_Msg_String(4, 1, (uint8_t *)"Klapan zakrut", 14);
 
-    FLASH_Write_Msg_String(5, 0, "Vzlom", 6);
-    FLASH_Write_Msg_String(5, 1, "Vzlom", 6);
+    FLASH_Write_Msg_String(5, 0, (uint8_t *)"Vzlom", 6);
+    FLASH_Write_Msg_String(5, 1, (uint8_t *)"Vzlom", 6);
 
-    FLASH_Write_Msg_String(6, 0, "Pozhar", 7);
-    FLASH_Write_Msg_String(6, 1, "Pozhar", 7);
+    FLASH_Write_Msg_String(6, 0, (uint8_t *)"Pozhar", 7);
+    FLASH_Write_Msg_String(6, 1, (uint8_t *)"Pozhar", 7);
 
     // Сигналы аварий
-    FLASH_Write_Msg_String(7, 0, "Vh Avar 1", 10);
-    FLASH_Write_Msg_String(7, 1, "Vh Avar 1", 10);
-    FLASH_Write_Msg_String(8, 0, "Vh Avar 2", 10);
-    FLASH_Write_Msg_String(8, 1, "Vh Avar 2", 10);
-    FLASH_Write_Msg_String(9, 0, "Vh Avar 3", 10);
-    FLASH_Write_Msg_String(9, 1, "Vh Avar 3", 10);
-    FLASH_Write_Msg_String(10, 0, "Vh Avar 4", 10);
-    FLASH_Write_Msg_String(10, 1, "Vh Avar 4", 10);
-    FLASH_Write_Msg_String(11, 0, "Vh Avar 5", 10);
-    FLASH_Write_Msg_String(11, 1, "Vh Avar 5", 10);
-    FLASH_Write_Msg_String(12, 0, "Vh Avar 6", 10);
-    FLASH_Write_Msg_String(12, 1, "Vh Avar 6", 10);
-    FLASH_Write_Msg_String(13, 0, "Vh Avar 7", 10);
-    FLASH_Write_Msg_String(13, 1, "Vh Avar 7", 10);
-    FLASH_Write_Msg_String(14, 0, "Vh Avar 8", 10);
-    FLASH_Write_Msg_String(14, 1, "Vh Avar 8", 10);
-    FLASH_Write_Msg_String(15, 0, "Vh Avar 9", 10);
-    FLASH_Write_Msg_String(15, 1, "Vh Avar 9", 10);
-    FLASH_Write_Msg_String(16, 0, "Vh Avar 10", 11);
-    FLASH_Write_Msg_String(16, 1, "Vh Avar 10", 11);
-    FLASH_Write_Msg_String(17, 0, "Vh Avar 11", 11);
-    FLASH_Write_Msg_String(17, 1, "Vh Avar 11", 11);
-    FLASH_Write_Msg_String(18, 0, "Vh Avar 12", 11);
-    FLASH_Write_Msg_String(18, 1, "Vh Avar 12", 11);
-    FLASH_Write_Msg_String(19, 0, "Vh Avar 13", 11);
-    FLASH_Write_Msg_String(19, 1, "Vh Avar 13", 11);
-    FLASH_Write_Msg_String(20, 0, "Vh Avar 14", 11);
-    FLASH_Write_Msg_String(20, 1, "Vh Avar 14", 11);
-    FLASH_Write_Msg_String(21, 0, "Vh Avar 15", 11);
-    FLASH_Write_Msg_String(21, 1, "Vh Avar 15", 11);
-    FLASH_Write_Msg_String(22, 0, "Vh Avar 16", 11);
-    FLASH_Write_Msg_String(22, 1, "Vh Avar 16", 11);
+    FLASH_Write_Msg_String(7, 0, (uint8_t *)"Vh Avar 1", 10);
+    FLASH_Write_Msg_String(7, 1, (uint8_t *)"Vh Avar 1", 10);
+    FLASH_Write_Msg_String(8, 0, (uint8_t *)"Vh Avar 2", 10);
+    FLASH_Write_Msg_String(8, 1, (uint8_t *)"Vh Avar 2", 10);
+    FLASH_Write_Msg_String(9, 0, (uint8_t *)"Vh Avar 3", 10);
+    FLASH_Write_Msg_String(9, 1, (uint8_t *)"Vh Avar 3", 10);
+    FLASH_Write_Msg_String(10, 0, (uint8_t *)"Vh Avar 4", 10);
+    FLASH_Write_Msg_String(10, 1, (uint8_t *)"Vh Avar 4", 10);
+    FLASH_Write_Msg_String(11, 0, (uint8_t *)"Vh Avar 5", 10);
+    FLASH_Write_Msg_String(11, 1, (uint8_t *)"Vh Avar 5", 10);
+    FLASH_Write_Msg_String(12, 0, (uint8_t *)"Vh Avar 6", 10);
+    FLASH_Write_Msg_String(12, 1, (uint8_t *)"Vh Avar 6", 10);
+    FLASH_Write_Msg_String(13, 0, (uint8_t *)"Vh Avar 7", 10);
+    FLASH_Write_Msg_String(13, 1, (uint8_t *)"Vh Avar 7", 10);
+    FLASH_Write_Msg_String(14, 0, (uint8_t *)"Vh Avar 8", 10);
+    FLASH_Write_Msg_String(14, 1, (uint8_t *)"Vh Avar 8", 10);
+    FLASH_Write_Msg_String(15, 0, (uint8_t *)"Vh Avar 9", 10);
+    FLASH_Write_Msg_String(15, 1, (uint8_t *)"Vh Avar 9", 10);
+    FLASH_Write_Msg_String(16, 0, (uint8_t *)"Vh Avar 10", 11);
+    FLASH_Write_Msg_String(16, 1, (uint8_t *)"Vh Avar 10", 11);
+    FLASH_Write_Msg_String(17, 0, (uint8_t *)"Vh Avar 11", 11);
+    FLASH_Write_Msg_String(17, 1, (uint8_t *)"Vh Avar 11", 11);
+    FLASH_Write_Msg_String(18, 0, (uint8_t *)"Vh Avar 12", 11);
+    FLASH_Write_Msg_String(18, 1, (uint8_t *)"Vh Avar 12", 11);
+    FLASH_Write_Msg_String(19, 0, (uint8_t *)"Vh Avar 13", 11);
+    FLASH_Write_Msg_String(19, 1, (uint8_t *)"Vh Avar 13", 11);
+    FLASH_Write_Msg_String(20, 0, (uint8_t *)"Vh Avar 14", 11);
+    FLASH_Write_Msg_String(20, 1, (uint8_t *)"Vh Avar 14", 11);
+    FLASH_Write_Msg_String(21, 0, (uint8_t *)"Vh Avar 15", 11);
+    FLASH_Write_Msg_String(21, 1, (uint8_t *)"Vh Avar 15", 11);
+    FLASH_Write_Msg_String(22, 0, (uint8_t *)"Vh Avar 16", 11);
+    FLASH_Write_Msg_String(22, 1, (uint8_t *)"Vh Avar 16", 11);
 
-    FLASH_Write_Msg_String(23, 0, "Neispravnost SIST", 18);
-    FLASH_Write_Msg_String(23, 1, "Neispravnost SIST", 18);
+    FLASH_Write_Msg_String(23, 0, (uint8_t *)"Neispravnost SIST", 18);
+    FLASH_Write_Msg_String(23, 1, (uint8_t *)"Neispravnost SIST", 18);
 
     SysReset();
 }

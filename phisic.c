@@ -91,7 +91,7 @@ void SetupUSART1(void)
 
     GPIO_InitTypeDef  GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
-    DMA_InitTypeDef DMA_InitStructure;
+//    DMA_InitTypeDef DMA_InitStructure;
 
     //    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
     //  	rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
@@ -335,7 +335,7 @@ void  InitADC(void)
 }
 
 // Настройка сиситемного таймера
-void Init_SysTick()
+void Init_SysTick(void)
 {
     SysTick_Config(TIMER_TICK); // Вызываем стандартную функцию настройки системного таймера из core_cm3.h (в ней разрешается прерывание системного таймера)
 }
@@ -343,13 +343,13 @@ void Init_SysTick()
 // Прерывания от UART1
 void USART1_IRQHandler(void)
 {
-    uint8_t tmp;
+    //uint8_t tmp;
 
     //if (USART_GetITStatus(USART1, USART_FLAG_RXNE) == SET)
     if((USART1->SR & USART_SR_RXNE)!=0)
     {
         USART_ClearITPendingBit(USART1, USART_FLAG_RXNE);
-        tmp = USART_ReceiveData(USART1);
+        //tmp = USART_ReceiveData(USART1);
 
     }
 

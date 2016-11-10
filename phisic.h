@@ -25,5 +25,6 @@ void send_str_uart1(char * string); // отправка данных в UART1
 void send_str_uart2(char * string); // отправка данных в UART2
 void InitADC(void);     // Функция настройки АЦП
 void SetupGPIO(void);   // функция инициализации пользовательских GPIO (например управляющих светодиодом)
+void Init_SysTick(void); // Настройка сиситемного таймера
 
 #endif
