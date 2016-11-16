@@ -327,7 +327,7 @@ void GSM_Communication_routine(void)
     Is_SIM800_alive();
 
     // Проверка связи
-    Communication_check();
+    //Communication_check();
 
     if (GSM_com_state.send_SMS_text[0] != '\0') // если есть что рассылать
     {
