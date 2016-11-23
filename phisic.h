@@ -18,13 +18,14 @@
 extern uint8_t sys_timer_stop; // признак для остановки вызовов внутри обработчика системного таймера
 // перменная требуется в случае выполнения критичесого (долгого и ресурсозатратного) кода, например записи во флеш конфигурационных пользовательских данных
 
-void SetupClock(void);  // Функция настройки тактирования
-void SetupUSART1(void); // Функция настройки UART1
-void SetupUSART2(void); // Функция настройки UART2
+void SetupClock(void);   // Функция настройки тактирования
+void SetupUSART1(void);  // Функция настройки UART1
+void SetupUSART2(void);  // Функция настройки UART2
 void send_str_uart1(char * string); // отправка данных в UART1
 void send_str_uart2(char * string); // отправка данных в UART2
-void InitADC(void);     // Функция настройки АЦП
-void SetupGPIO(void);   // функция инициализации пользовательских GPIO (например управляющих светодиодом)
+void InitADC(void);      // Функция настройки АЦП
+void SetupGPIO(void);    // функция инициализации пользовательских GPIO (например управляющих светодиодом)
 void Init_SysTick(void); // Настройка сиситемного таймера
+void SetupBKP(void);     // настройка backup домена
 
 #endif

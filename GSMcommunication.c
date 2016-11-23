@@ -265,23 +265,24 @@ void Is_SIM800_alive(void)
 // проверка состояния связи по GSM каналу (просто проверяется колличество ошибок при передачи сообщений и других действиях)
 void Communication_check(void)
 {
-	if (state_of_sim800_num1.num_of_fail <3)
+	if (state_of_sim800_num1.num_of_fail <=2)
+	{
 		return;
+	}
 
-	state_of_sim800_num1.num_of_fail = 0; // если колличество ошибок превысило порог в 2 сообщения, то пробуем переключится на второую SIM-карту
+	state_of_sim800_num1.num_of_fail = 0; // если колличество ошибок превысило порог в 2, то пробуем переключится на второую SIM-карту
 
-    // что-бы тревожные сообщения точно были разосланы через другую SIM-карту сбросим опросы цифровых входов и АЦП
-    init_74HC165(&reg74hc165_current_state_num1);
-    ADC_init_routine(&ADC_current_state_num1);
-
+	PWR->CR |=  PWR_CR_DBP;                 //разрешить запись в область BKP
 	if (state_of_sim800_num1.current_SIM_card == 1) // пробуем перключить SIM-карту
     {
-    	sim800_init(&state_of_sim800_num1, send_str_uart2, 2, 0);
+		BKP->DR1 =  2;                        //сохранить данные о рабочей SIM-карте
     }
     else
     {
-    	sim800_init(&state_of_sim800_num1, send_str_uart2, 1, 0);
+    	BKP->DR1 =  1;                        //сохранить данные о рабочей SIM-карте
     }
+	PWR->CR &= ~PWR_CR_DBP;                 //запретить запись в область BKP
+	SysReset(); // пробуем перезапуститься
 }
 
 // главная коммуникационная функция GSM
