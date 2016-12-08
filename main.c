@@ -31,6 +31,11 @@ int main(void)
 {
     Sys_Init(); // первоначальная инициализация системы
 
+    uint8_t current_SIM = 1;
+
+    //читаем регистр данных №1 в backup домене(в нем хранится номер активной SIM-карты)
+    current_SIM = BKP->DR1;
+
     GSM_Com_Init(&state_of_sim800_num1); // инициализация коммуникационного интерфейса GSM
 
     FLASH_Write_Default_String(); // запись в последнии страницы флеш памяти дефолтных строк текстовых сообщений SMS если это еще не сделано
@@ -42,37 +47,26 @@ int main(void)
 
     ADC_init_routine(&ADC_current_state_num1);
 
-    uint8_t current_SIM = 1;
-
-    uint16_t bkp_sim;
-
-    //читаем регистр данных №1 в backup домене(в нем хранится номер активной SIM-карты)
-    bkp_sim = BKP->DR1;
-
-    if(bkp_sim <= 1)
-    {
-        current_SIM = 1;
-    }
-    else
-    {
-    	current_SIM = 2;
-	}
+    uint32_t i = 0; // счетчик повторных попыток
 
     // инициализация SIM800
     while (sim800_init(&state_of_sim800_num1, send_str_uart2, current_SIM, 0)) // Первый SIM800 сидит на UART2
     {
-    	PWR->CR |=  PWR_CR_DBP;                 //разрешить запись в область BKP
-    	if (state_of_sim800_num1.current_SIM_card == 1) // пробуем перключить SIM-карту
-    	{
-    	    BKP->DR1 =  2;                        //сохранить данные о рабочей SIM-карте
-    	}
-    	else
-    	{
-    	  	BKP->DR1 =  1;                        //сохранить данные о рабочей SIM-карте
-    	}
-    	PWR->CR &= ~PWR_CR_DBP;                 //запретить запись в область BKP
+        i++;
+        if ( i >= 2 ) // попыток завестсь на текущей SIM карте - 3-и штуки
+        {
+            if (current_SIM == 1) // пробуем перключить SIM-карту
+            {
+                BKP->DR1 =  2;                        //сохранить данные о рабочей SIM-карте
+            }
+            else
+            {
+                BKP->DR1 =  1;                        //сохранить данные о рабочей SIM-карте
+            }
 
-    	SysReset(); // пробуем перезапуститься
+            SysReset(); // пробуем перезапуститься
+            i = 0;
+        }
     };
 
     // запуск системного таймера надо производить только после настройки SIM800

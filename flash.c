@@ -440,14 +440,14 @@ uint8_t FLASH_Write_Config_Page(uint8_t * config_array, uint8_t size)
 // (первый символл соответсвующей строки-ячейки равен 0xFFFFFFFF) заполняет эти страницы дефолтными строками
 void FLASH_Write_Default_String(void)
 {
-//    uint8_t i = 0; // перебор страниц флеш
-//    uint8_t j = 0; // перебор строк ячеек внутри страницы
-//    uint8_t k = 0; // счетчик записываемых 32-х битных слов
-//    uint8_t m = 1; // счетчик записаных строк
-//    uint32_t write_str[MAX_SIZE_STRING_32];
-//    uint8_t string_of_num[4]; // строка содержащая номер входного сигнала (маловероятно, что число превысит 3-и порядка)
-//    uint8_t string_prefix_size1 = strlen(std_string_prefix1);
-//    uint8_t string_prefix_size2 = strlen(std_string_prefix2);
+    //    uint8_t i = 0; // перебор страниц флеш
+    //    uint8_t j = 0; // перебор строк ячеек внутри страницы
+    //    uint8_t k = 0; // счетчик записываемых 32-х битных слов
+    //    uint8_t m = 1; // счетчик записаных строк
+    //    uint32_t write_str[MAX_SIZE_STRING_32];
+    //    uint8_t string_of_num[4]; // строка содержащая номер входного сигнала (маловероятно, что число превысит 3-и порядка)
+    //    uint8_t string_prefix_size1 = strlen(std_string_prefix1);
+    //    uint8_t string_prefix_size2 = strlen(std_string_prefix2);
 
     if (0xFFFFFFFF != FLASH_Read(DATA_Pages[0])) // стертая флешь заполняется 0xFFFFFFFF
     {

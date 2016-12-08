@@ -9,6 +9,9 @@
 #include "stm32f10x_adc.h"
 #include <stdio.h>
 #include <string.h>
+#include "stm32f10x_rcc.h"
+#include "stm32f10x_pwr.h"
+#include "misc.h"
 
 #include "misc.h"
 
@@ -91,7 +94,7 @@ void SetupUSART1(void)
 
     GPIO_InitTypeDef  GPIO_InitStructure;
     USART_InitTypeDef USART_InitStructure;
-//    DMA_InitTypeDef DMA_InitStructure;
+    //    DMA_InitTypeDef DMA_InitStructure;
 
     //    memset(rec_buf_usart1, 0, SIZE_BUF_UART1); // обнуляем буфер для принимаемых данных UART1
     //  	rec_buf_last_usart1 = -1;                   // индекс последнего необработанного символа принятого от UART1 устанавливаем в -1
@@ -345,8 +348,11 @@ void Init_SysTick(void)
  ******************************************************************************/
 void SetupBKP(void)
 {
-	//разрешить тактирование управления питанием и управления резервной областью
-	RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR | RCC_APB1Periph_BKP, ENABLE);
+    PWR_BackupAccessCmd(ENABLE);
+
+    //	//разрешить тактирование управления питанием и управления резервной областью
+    //	RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
 }
 
 // Прерывания от UART1

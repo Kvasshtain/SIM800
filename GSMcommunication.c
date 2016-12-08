@@ -265,24 +265,23 @@ void Is_SIM800_alive(void)
 // проверка состояния связи по GSM каналу (просто проверяется колличество ошибок при передачи сообщений и других действиях)
 void Communication_check(void)
 {
-	if (state_of_sim800_num1.num_of_fail <=2)
-	{
-		return;
-	}
-
-	state_of_sim800_num1.num_of_fail = 0; // если колличество ошибок превысило порог в 2, то пробуем переключится на второую SIM-карту
-
-	PWR->CR |=  PWR_CR_DBP;                 //разрешить запись в область BKP
-	if (state_of_sim800_num1.current_SIM_card == 1) // пробуем перключить SIM-карту
+    if (state_of_sim800_num1.num_of_fail <=2)
     {
-		BKP->DR1 =  2;                        //сохранить данные о рабочей SIM-карте
+        return;
+    }
+
+    state_of_sim800_num1.num_of_fail = 0; // если колличество ошибок превысило порог в 2, то пробуем переключится на второую SIM-карту
+
+    if (state_of_sim800_num1.current_SIM_card == 1) // пробуем перключить SIM-карту
+    {
+        BKP->DR1 =  2;                        //сохранить данные о рабочей SIM-карте
     }
     else
     {
-    	BKP->DR1 =  1;                        //сохранить данные о рабочей SIM-карте
+        BKP->DR1 =  1;                        //сохранить данные о рабочей SIM-карте
     }
-	PWR->CR &= ~PWR_CR_DBP;                 //запретить запись в область BKP
-	SysReset(); // пробуем перезапуститься
+
+    SysReset(); // пробуем перезапуститься
 }
 
 // главная коммуникационная функция GSM
@@ -571,7 +570,7 @@ void SMS_parse(void)
     //        return;
     //    }
 
-	// команда ЭХО для проверки связи
+    // команда ЭХО для проверки связи
     if (stristr(state_of_sim800_num1.rec_SMS_data, (uint8_t *)ECHO))
     {
         Echo();
