@@ -14,12 +14,12 @@
 // префиксы строк входящих SMS содержащих команды
 const char ECHO[] = "echo";
 const char SAVE_TEL_CMD[] = "tel";
-const char SAVE_ALARM_T1_CMD[] = "vhod text1 ";
-const char SAVE_ALARM_T2_CMD[] = "vhod text2 ";
-const char SAVE_ACT_STATE_0_CMD[] = "akt 0 vhoda:";
-const char SAVE_ACT_STATE_1_CMD[] = "akt 1 vhoda:";
-const char SAVE_ACT_STATE_RNG_0_CMD[] = "akt 0 vhodov:";
-const char SAVE_ACT_STATE_RNG_1_CMD[] = "akt 1 vhodov:";
+const char SAVE_ALARM_T1_CMD[] = "vhod_text1_";
+const char SAVE_ALARM_T2_CMD[] = "vhod_text2_";
+const char SAVE_ACT_STATE_0_CMD[] = "type_vhoda_0:";
+const char SAVE_ACT_STATE_1_CMD[] = "type_vhoda_1:";
+const char SAVE_ACT_STATE_RNG_0_CMD[] = "type_vhodov_0:";
+const char SAVE_ACT_STATE_RNG_1_CMD[] = "type_vhodov_1:";
 
 // тексты SMS отправляемые при пренижении/превышении порогов контролируемых напряжений
 const char DEC_TH_EXT_BAT_MSG[] = "No 220V";
@@ -328,7 +328,7 @@ void GSM_Communication_routine(void)
     Is_SIM800_alive();
 
     // Проверка связи
-    //Communication_check();
+    Communication_check();
 
     if (GSM_com_state.send_SMS_text[0] != '\0') // если есть что рассылать
     {
@@ -396,7 +396,7 @@ void Save_Phone_Num(void)
 // принимает тип сообщения (1 или 2)
 void Save_Alarm_Text(uint8_t type)
 {
-    // SMS с текстом: "vhod text1(2) N:text", где N - порядковый номер входа (1,2,3,...), text - текст подлежащий сохранению
+    // SMS с текстом: "vhod_text1(2)_N:text", где N - порядковый номер входа (1,2,3,...), text - текст подлежащий сохранению
     int8_t msg_num;
     uint8_t * start_pos_msg; // первый символ записываемого сообщения
     uint8_t text_len;
@@ -457,7 +457,7 @@ void Save_Alarm_Text(uint8_t type)
 // принимает признак активного состояния (0 или 1)
 void Save_Alarm_State(uint8_t state)
 {
-    // SMS с текстом: "akt sost 0(1) vhoda:N1,...,Ni", где Ni - порядковый номер входа (1,2,3,...), для которых активным состоянием будет 0(или 1).
+    // SMS с текстом: "type_vhoda_0(1):N1,...,Ni", где Ni - порядковый номер входа (1,2,3,...), для которых активным состоянием будет 0(или 1).
     uint8_t input_num;   // номер входа
     uint8_t * input_num_pos;   // позиция символа - номера входа в сообщении
 
@@ -501,7 +501,7 @@ void Save_Alarm_State(uint8_t state)
 // принимает признак активного состояния (0 или 1)
 void Save_range_Alarm_State(uint8_t state)
 {
-    // SMS с текстом: "akt sost 0(1) vhodov:Ni-Nj", где Ni - Nj - диапазон номеров входов (напимер 2-5), для которых активным состоянием будет 0(или 1).
+    // SMS с текстом: "type_vhodov_0(1):Ni-Nj", где Ni - Nj - диапазон номеров входов (напимер 2-5), для которых активным состоянием будет 0(или 1).
     uint8_t i;
     int8_t start_input_num;   // начальный номер входа
     int8_t stop_input_num;    // конечный номер входа
